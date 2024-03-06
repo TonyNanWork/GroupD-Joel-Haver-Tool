@@ -6,6 +6,7 @@ if(not os.path.isdir('video_data')):
 
 success, image = vidcap.read()
 
+# simple file to 
 for filename in os.listdir("video_data"):
     file_path = os.path.join("video_data", filename)
     try:
