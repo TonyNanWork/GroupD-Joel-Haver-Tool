@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLa
                              QListWidgetItem, QSlider, QPushButton, QSizePolicy)
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize
+import natsort
 
 class VideoPlayer(QWidget):
     def __init__(self):
@@ -73,7 +74,10 @@ class VideoPlayer(QWidget):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder With Frames")
         if folder:
             self.frame_folder = folder
-            self.frame_files = sorted([f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('.jpg')])
+            # Sort the files numerically - adds some extra wait time though
+            self.frame_files = natsort.natsorted(
+                [f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('.jpg')]
+            )
             self.current_frame = 0
             self.slider.setMaximum(len(self.frame_files) - 1)
             self.populateFrameList()
