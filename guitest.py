@@ -73,7 +73,7 @@ class VideoPlayer(QWidget):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder With Frames")
         if folder:
             self.frame_folder = folder
-            self.frame_files = sorted([f for f in os.listdir(folder) if f.endswith('.png')])
+            self.frame_files = sorted([f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('.jpg')])
             self.current_frame = 0
             self.slider.setMaximum(len(self.frame_files) - 1)
             self.populateFrameList()
