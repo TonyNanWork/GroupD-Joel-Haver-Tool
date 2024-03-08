@@ -9,16 +9,15 @@ def compute_optical_flow(prev_frame, next_frame):
 
     return flow
 
-def propagate(drawn_frame, video_frame, output_frame):
-        # Compute optical flow between drawn frame and original video frame
-        flow = compute_optical_flow(drawn_frame, video_frame)
-
+def propagate(drawn_frame, video_frame, output_frame, flow):
         # Use the optical flow to propagate the drawn style to the original video frame
-
         warped_drawn_frame = cv2.remap(drawn_frame, flow, None, cv2.INTER_LINEAR)
 
+        # Blend the warped drawn frame with the original video frame
+        propagated_frame = cv2.addWeighted(video_frame, 0.5, warped_drawn_frame, 0.5, 0)
+
         # Save the propagated frame to the output folder
-        cv2.imwrite(output_frame, warped_drawn_frame)
+        cv2.imwrite(output_frame, propagated_frame)
 
 # Specify the paths to the folders
 
@@ -42,10 +41,14 @@ video_frames = natsort.natsorted(
     [f for f in os.listdir(video_frame_folder) if f.endswith('.png') or f.endswith('.jpg')]
 )
 
-for frame_name in video_frames:
-    video_frame = cv2.imread(os.path.join(video_frame_folder, frame_name))
-    output_frame = os.path.join(output_frame_folder, frame_name)
+for i in range(len(video_frames) - 1):
+    video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i]))
+    next_video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i+1]))
+    output_frame = os.path.join(output_frame_folder, video_frames[i])
 
-    # Propagate the drawn style from each drawn frame to the video frame
+    # Compute optical flow between consecutive video frames
+    flow = compute_optical_flow(video_frame, next_video_frame)
+
+    # Iterate over drawn frames and propagate style to video frame
     for drawn_frame in drawn_frames:
-        propagate(drawn_frame, video_frame, output_frame)
+        propagate(drawn_frame, video_frame, output_frame, flow)
