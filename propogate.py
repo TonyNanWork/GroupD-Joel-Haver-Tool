@@ -5,16 +5,12 @@ def compute_optical_flow(prev_frame, next_frame):
     prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
     next_gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
 
-    # Compute optical flow
+    # Compute dense optical flow
     flow = cv2.calcOpticalFlowFarneback(prev_gray, next_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
     return flow
 
 def propagate(drawn_frame, flow):
-    # Convert drawn frame to grayscale
-    # drawn_gray = cv2.cvtColor(drawn_frame, cv2.COLOR_BGR2GRAY)
-
-    # Remap the drawn frame using the optical flow
     warped_drawn_frame = cv2.remap(drawn_frame, flow[..., 0], flow[..., 1], cv2.INTER_LINEAR)
 
     return warped_drawn_frame
