@@ -1,15 +1,26 @@
-import optical_flow, os, cv2, natsort
+import os, cv2, natsort
+
+def compute_optical_flow(prev_frame, next_frame):
+    prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+    next_gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
+
+    # Use the Lucas-Kanade method to compute optical flow
+    flow = cv2.calcOpticalFlowFarneback(prev_gray, next_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+
+    return flow
 
 def propagate(drawn_frame, video_frame, output_frame):
         # Compute optical flow between drawn frame and original video frame
-        flow = optical_flow.compute_optical_flow(drawn_frame, video_frame)
+        flow = compute_optical_flow(drawn_frame, video_frame)
 
         # Use the optical flow to propagate the drawn style to the original video frame
-        # Example: Use the flow to warp the drawn frame onto the original video frame
-        warped_drawn_frame = cv2.remap(drawn_frame, flow, None, cv2.INTER_LINEAR)
+        h, w = drawn_frame.shape[:2]
+        flow_map = -flow * 2  # Scale the flow map to match pixel coordinates
+        remapped_frame = cv2.remap(drawn_frame, flow_map, None, cv2.INTER_LINEAR)
+        #warped_drawn_frame = cv2.remap(drawn_frame, flow, None, cv2.INTER_LINEAR)
 
         # Save the propagated frame to the output folder
-        cv2.imwrite(output_frame, warped_drawn_frame)
+        cv2.imwrite(output_frame, remapped_frame)
 
 # Specify the paths to the folders
 drawn_frame_folder = "drawn"
