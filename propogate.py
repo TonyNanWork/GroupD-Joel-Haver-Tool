@@ -2,21 +2,19 @@ import os, cv2, natsort
 import numpy as np
 
 def compute_optical_flow(prev_frame, next_frame):
-    prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-    next_gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
-
     # Compute dense optical flow
-    flow = cv2.calcOpticalFlowFarneback(prev_gray, next_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+    return cv2.calcOpticalFlowFarneback(prev_frame, next_frame, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
-    return flow
+# warp drawn frame using flow
+def warp_frame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
+    h, w, _ = flow.shape
+    remap_flow = flow.transpose(2, 0, 1)
+    
+    remap_xy = np.float32(np.mgrid[:h, :w][::-1])
+    
+    remap_x, remap_y = np.float32(remap_xy + remap_flow)
+    return cv2.remap(drawn_frame, remap_x, remap_y, interpolation)
 
-def propagate(drawn_frame, flow):
-    warped_drawn_frame = cv2.remap(drawn_frame, flow[..., 0], flow[..., 1], cv2.INTER_LINEAR)
-
-    return warped_drawn_frame
-
-
-# Specify the paths to the folders
 drawn_frame_folder = "drawn"
 video_frame_folder = "video_data"
 output_frame_folder = "output"
@@ -39,15 +37,15 @@ for i in range(len(video_frames) - 1):
     video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i]))
     next_video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i+1]))
 
+    # Find the closest drawn frame's index 
+    closest_drawn = min(drawn_frames.keys(), key=lambda x: abs(x - i))
+    
     # Compute optical flow between consecutive video frames
-    flow = compute_optical_flow(video_frame, next_video_frame)
-
-    # Find the closest drawn frame index
-    closest_drawn_frame_index = min(drawn_frames.keys(), key=lambda x: abs(x - i))
-
-    # Propagate the drawn style using the optical flow
-    propagated_frame = propagate(drawn_frames[closest_drawn_frame_index], flow)
-
-    # Save the propagated frame with a unique filename
+    flow = compute_optical_flow(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
+    
+    # Warp the frame
+    warped = warp_frame(flow, drawn_frames[closest_drawn])
+    
+    # Save the frame
     output_frame = os.path.join(output_frame_folder, f"{os.path.splitext(video_frames[i])[0]}.jpg")
-    cv2.imwrite(output_frame, propagated_frame)
+    cv2.imwrite(output_frame, warped)
