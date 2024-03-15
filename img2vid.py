@@ -1,10 +1,17 @@
 import cv2
 import os
+import natsort
+# import time
 
 # Converts images in folder to video
 def images_to_video(image_folder, video_name, fps=30):
-    images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
-    images.sort(key=lambda x: int(x.split('.')[0]))
+    
+    #start = time.time()
+    images = natsort.natsorted(
+       [f for f in os.listdir(image_folder) if f.endswith('.png') or f.endswith('.jpg')]
+    )
+    #images.sort(key=lambda x: int(x.split('.')[0]))
+    
     if not images:
         print("No images found in the folder: ", image_folder)
         return
@@ -19,6 +26,8 @@ def images_to_video(image_folder, video_name, fps=30):
 
     cv2.destroyAllWindows()
     video.release()
+    #end = time.time()
+    #print(end-start)
 
 folder_path = "output"
 output_video_name = "output.avi"
