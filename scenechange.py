@@ -3,12 +3,11 @@ import numpy as np
 import os
 import natsort
 
-
 def detect_scene_changes_from_images(frames_dir, threshold=60):
     # List all frame images in the directory sorted by name
     frame_files = natsort.natsorted([f for f in os.listdir(frames_dir) if f.endswith('.png') or f.endswith('.jpg')])
     
-    print(frame_files)
+    #print(frame_files)
     if len(frame_files) == 0:
         print("No image frames found in the directory")
         return []
@@ -33,7 +32,7 @@ def detect_scene_changes_from_images(frames_dir, threshold=60):
         change_percent = np.sum(thresh) / thresh.size
         
         if change_percent > threshold:
-            print(f"Scene change detected at image: {frame_file}")
+            #print(f"Scene change detected at image: {frame_file}")
             scene_changes.append(frame_file)
 
         # Update previous frame
@@ -41,7 +40,6 @@ def detect_scene_changes_from_images(frames_dir, threshold=60):
 
     return scene_changes
 
-# Replace 'path_to_your_frames_directory' with the path to your directory containing the frame images
 frames_dir = 'video_data1'
 scene_changes = detect_scene_changes_from_images(frames_dir)
 print("Scene changes at images:", scene_changes)
