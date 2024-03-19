@@ -9,12 +9,26 @@ def compute_optical_flow(prev_frame, next_frame):
 def warp_frame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
     h, w, _ = flow.shape
     remap_flow = flow.transpose(2, 0, 1)
-    
     remap_xy = np.float32(np.mgrid[:h, :w][::-1])
     
     remap_x, remap_y = np.float32(remap_xy + remap_flow)
     return cv2.remap(drawn_frame, remap_x, remap_y, interpolation)
 
+def visualize_optical_flow(flow):
+    hsv = np.zeros((flow.shape[0], flow.shape[1], 3), dtype=np.uint8)
+    hsv[..., 1] = 255
+
+    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+
+    hsv[..., 0] = ang * 180 / np.pi / 2
+    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+
+    return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+def check_folder(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        
 def get_video_frames(folder):
     return natsort.natsorted(f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('jpg'))
     
@@ -45,17 +59,28 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
         #closest_drawn_frame = drawn_frames_mapping[clo]
         
         # Compute optical flow between consecutive video frames
+        #flow = compute_optical_flow(video_frame.mean(-1), next_video_frame.mean(-1))
         flow = compute_optical_flow(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
+        
+        # flow_visualization = visualize_optical_flow(flow)
+        # flow_output_path = os.path.join("flow", f"flow_{os.path.splitext(video_frames[i])[0]}.png")
+        # cv2.imwrite(flow_output_path, flow_visualization)
         
         # Warp the frame
         warped = warp_frame(flow, drawn_frames[closest_drawn])
         
         # Save the frame
-        output_frame = os.path.join(output_frame_folder, f"{os.path.splitext(video_frames[i])[0]}.png")
+        output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.png')
         cv2.imwrite(output_frame, warped)
 
-video_frame_folder = "video_data"
-drawn_frame_folder = "drawn"
-output_frame_folder = "output"
+video_folder = 'video_data'
+drawn_folder = 'drawn'
+output_folder = 'output'
+flow_folder = 'flow'
 
-propagate(video_frame_folder, drawn_frame_folder, output_frame_folder)
+check_folder(video_folder)
+check_folder(drawn_folder)
+check_folder(output_folder)
+check_folder(flow_folder)
+
+propagate(video_folder, drawn_folder, output_folder)
