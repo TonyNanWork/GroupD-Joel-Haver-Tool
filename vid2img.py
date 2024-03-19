@@ -19,6 +19,6 @@ for filename in os.listdir("video_data"):
 
 frame = 1
 while success:
-  cv2.imwrite('video_data/%d.jpg' % frame, image)    
+  cv2.imwrite('video_data/%d.png' % frame, image)    
   success, image = vidcap.read()
   frame += 1
