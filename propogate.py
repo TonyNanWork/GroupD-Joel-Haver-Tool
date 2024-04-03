@@ -134,7 +134,8 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
     # drawn_frames_mapping = {i: cv2.imread(os.path.join(drawn_frame_folder, frame)) for i, frame in enumerate(drawn_frames)}
     
     # Iterate over each video frame and propagate the drawn style
-    for i in range(int(len(video_frames)/10)):
+    for i in range(int(len(video_frames) - 1)):
+        
         video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i]))
         next_video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i+1]))
 
