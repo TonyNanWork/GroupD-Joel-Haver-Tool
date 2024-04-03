@@ -14,7 +14,9 @@ def detect_scene_changes_from_images(frames_dir, threshold=60):
 
     # Read the first frame and initialize variables
     prev_frame = cv2.imread(os.path.join(frames_dir, frame_files[0]))
+   
     prev_frame_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+    prev_frame = cv2.resize(prev_frame,fx=0.5, fy=0.5)
     prev_frame_gray = cv2.GaussianBlur(prev_frame_gray, (21, 21), 0)
 
     scene_changes = []

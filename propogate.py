@@ -134,7 +134,7 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
     # drawn_frames_mapping = {i: cv2.imread(os.path.join(drawn_frame_folder, frame)) for i, frame in enumerate(drawn_frames)}
     
     # Iterate over each video frame and propagate the drawn style
-    for i in range(len(video_frames) - 1):
+    for i in range(int(len(video_frames)/10)):
         video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i]))
         next_video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i+1]))
 
@@ -154,7 +154,7 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
         warped = warp_frame(flow, drawn_frames[closest_drawn])
 
         # Save the frame
-        output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.png')
+        output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.jpg')
         cv2.imwrite(output_frame, warped)
         
         print(f"Done frame {i+1}")
