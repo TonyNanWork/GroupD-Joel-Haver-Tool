@@ -23,6 +23,42 @@ def compute_optical_flow(im1, im2):
 
     return flow
 
+# def compute_optical_flow(prev_frame, next_frame, window_size=2):
+#     height, width = prev_frame.shape
+
+#     # Compute derivatives of the first frame
+#     Ix = np.gradient(prev_frame, axis=1)
+#     Iy = np.gradient(prev_frame, axis=0)
+#     It = next_frame - prev_frame
+
+#     # Initialize flow vectors
+#     flow = np.zeros((height, width, 2))
+
+#     # Compute optical flow for each pixel
+#     half_window = window_size // 2
+#     # Compute optical flow for each pixel
+#     for y in range(half_window, height - half_window):
+#         for x in range(half_window, width - half_window):
+#             # Ensure the window is within bounds
+#             y_min = max(0, y - half_window)
+#             y_max = min(height - 1, y + half_window)
+#             x_min = max(0, x - half_window)
+#             x_max = min(width - 1, x + half_window)
+
+#             # Compute sum of products of derivatives in the window
+#             Ix_window = Ix[y_min:y_max + 1, x_min:x_max + 1].flatten()
+#             Iy_window = Iy[y_min:y_max + 1, x_min:x_max + 1].flatten()
+#             It_window = It[y_min:y_max + 1, x_min:x_max + 1].flatten()
+
+#             A = np.vstack((Ix_window, Iy_window)).T
+#             b = -It_window[:, np.newaxis]
+
+#             # Solve linear system
+#             if np.linalg.matrix_rank(A) >= 2:
+#                 flow[y, x] = np.linalg.lstsq(A, b, rcond=None)[0].reshape(2)
+
+#     return flow
+
 # warp drawn frame using flow
 def warp_frame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
     
@@ -120,6 +156,8 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
         # Save the frame
         output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.png')
         cv2.imwrite(output_frame, warped)
+        
+        print(f"Done frame {i+1}")
 
         # flow_x, flow_y = compute_optical_flow(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
 
