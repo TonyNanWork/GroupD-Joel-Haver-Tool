@@ -1,5 +1,5 @@
 import cv2, os, shutil
-vidcap = cv2.VideoCapture('video_src/1.mp4')
+vidcap = cv2.VideoCapture('video_src/2.mp4')
 
 if(not os.path.isdir('video_data')):
     os.mkdir("video_data")
