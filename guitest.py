@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLa
                              QListWidgetItem, QSlider, QPushButton, QSizePolicy)
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize
+from scenechange import detect_scene_changes_from_images
+
 import natsort
 
 class VideoPlayer(QWidget):
@@ -86,9 +88,15 @@ class VideoPlayer(QWidget):
 
     def populateFrameList(self):
         self.frameList.clear()
+
+        changes = detect_scene_changes_from_images(self.frame_folder)
+        print(changes)
+        changes.insert(0,self.frame_files[0])
+
         thumbnailSize = 150  # Desired thumbnail size
 
-        for filename in self.frame_files:
+        for filename in changes:
+            
             frame_path = os.path.join(self.frame_folder, filename)
             pixmap = QPixmap(frame_path)
 

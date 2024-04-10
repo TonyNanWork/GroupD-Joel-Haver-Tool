@@ -4,9 +4,12 @@ import os
 import natsort
 
 def detect_scene_changes_from_images(frames_dir, threshold=60):
+    frame_files = None
+    if (type(frames_dir) == str):
     # List all frame images in the directory sorted by name
-    frame_files = natsort.natsorted([f for f in os.listdir(frames_dir) if f.endswith('.png') or f.endswith('.jpg')])
-    
+        frame_files = natsort.natsorted([f for f in os.listdir(frames_dir) if f.endswith('.png') or f.endswith('.jpg')])
+    else:
+        frame_files = frames_dir
     #print(frame_files)
     if len(frame_files) == 0:
         print("No image frames found in the directory")
@@ -16,7 +19,7 @@ def detect_scene_changes_from_images(frames_dir, threshold=60):
     prev_frame = cv2.imread(os.path.join(frames_dir, frame_files[0]))
    
     prev_frame_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-    prev_frame = cv2.resize(prev_frame,fx=0.5, fy=0.5)
+    #prev_frame_gray = cv2.resize(prev_frame_gray,fx=0.5, fy=0.5)
     prev_frame_gray = cv2.GaussianBlur(prev_frame_gray, (21, 21), 0)
 
     scene_changes = []
@@ -42,6 +45,8 @@ def detect_scene_changes_from_images(frames_dir, threshold=60):
 
     return scene_changes
 
-frames_dir = 'video_data1'
-scene_changes = detect_scene_changes_from_images(frames_dir)
-print("Scene changes at images:", scene_changes)
+if __name__ == "__main__":
+
+    frames_dir = 'video_data1'
+    scene_changes = detect_scene_changes_from_images(frames_dir)
+    print("Scene changes at images:", scene_changes)
