@@ -12,7 +12,9 @@ class VideoPlayer(QWidget):
     def __init__(self):
         super().__init__()
         self.frame_folder = ""
+        self.scene_files = [[]]
         self.frame_files = []
+        self.current_scene = 0
         self.current_frame = 0
         self.isPlaying = False
 
@@ -81,8 +83,9 @@ class VideoPlayer(QWidget):
                 [f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('.jpg')]
             )
             self.current_frame = 0
-            self.slider.setMaximum(len(self.frame_files) - 1)
             self.populateFrameList()
+            self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
+
             self.showNextFrame()
 
 
@@ -92,30 +95,40 @@ class VideoPlayer(QWidget):
         changes = detect_scene_changes_from_images(self.frame_folder)
         print(changes)
         changes.insert(0,self.frame_files[0])
+        changes.append("placeholder")
 
         thumbnailSize = 150  # Desired thumbnail size
 
-        for filename in changes:
-            
-            frame_path = os.path.join(self.frame_folder, filename)
-            pixmap = QPixmap(frame_path)
+        scene_num = 0
+        scenelist =[]
+
+        for filename in self.frame_files:
+            if filename == changes[scene_num]:
+                frame_path = os.path.join(self.frame_folder, filename)
+                pixmap = QPixmap(frame_path)
 
         # Scale the pixmap to the thumbnail size while maintaining aspect ratio
-            scaledPixmap = pixmap.scaled(thumbnailSize, thumbnailSize, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                scaledPixmap = pixmap.scaled(thumbnailSize, thumbnailSize, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         # Create an icon from the scaled pixmap
-            icon = QIcon(scaledPixmap)
+                icon = QIcon(scaledPixmap)
 
         # Create a list item and set its icon
-            item = QListWidgetItem()
-            item.setIcon(icon)
+                item = QListWidgetItem()
+                item.setIcon(icon)
 
         # Optionally, set the text of the item here if desired, e.g., item.setText("Frame")
         
         # Set the size hint to ensure the list widget item is large enough to display the icon
-            item.setSizeHint(scaledPixmap.size())
+                item.setSizeHint(scaledPixmap.size())
 
-            self.frameList.addItem(item)
+                self.frameList.addItem(item)
+
+                scene_num = scene_num + 1
+                self.scene_files.append([])
+            self.scene_files[scene_num - 1].append(filename)
+            
+            
 
     # Adjust the width of the QListWidget to accommodate the larger thumbnails
         self.frameList.setFixedWidth(thumbnailSize + 20)  # Adjust based on your UI needs
@@ -123,16 +136,16 @@ class VideoPlayer(QWidget):
 
 
     def showNextFrame(self):
-        if self.frame_files and self.current_frame < len(self.frame_files):
-            frame_path = os.path.join(self.frame_folder, self.frame_files[self.current_frame])
+        if self.frame_files and self.current_frame < len(self.scene_files[self.current_scene]):
+            frame_path = os.path.join(self.frame_folder, self.scene_files[self.current_scene][self.current_frame])
             pixmap = QPixmap(frame_path)
             self.label.setPixmap(pixmap.scaled(self.label.size(), Qt.KeepAspectRatio))
             self.slider.setValue(self.current_frame)
-            self.filenameLabel.setText(self.frame_files[self.current_frame])
+            self.filenameLabel.setText(self.scene_files[self.current_scene][self.current_frame])
 
             if self.isPlaying:
                 self.current_frame += 1
-                if self.current_frame >= len(self.frame_files):
+                if self.current_frame >= len(self.scene_files[self.current_scene]):
                     self.current_frame = 0  # Loop back to the first frame
                     self.stopVideo()  # Stop when reaching the last frame
 
@@ -146,7 +159,10 @@ class VideoPlayer(QWidget):
 
     def listFrameChanged(self, currentRow):
         if 0 <= currentRow < len(self.frame_files):
-            self.current_frame = currentRow
+            self.current_scene = currentRow
+            self.current_frame = 0
+            self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
+            self.slider.setValue(0)
             self.showNextFrame()
 
 def main():
