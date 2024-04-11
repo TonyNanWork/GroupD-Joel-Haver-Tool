@@ -177,14 +177,14 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
         
         #print(f"Done frame {i+1}")
 
-video_folder = 'video_data'
-drawn_folder = 'drawn'
-output_folder = 'output'
-flow_folder = 'flow'
+# video_folder = 'video_data'
+# drawn_folder = 'drawn'
+# output_folder = 'output'
+# flow_folder = 'flow'
 
-check_folder(video_folder)
-check_folder(drawn_folder)
-check_folder(output_folder)
-check_folder(flow_folder)
+# check_folder(video_folder)
+# check_folder(drawn_folder)
+# check_folder(output_folder)
+# check_folder(flow_folder)
 
-propagate(video_folder, drawn_folder, output_folder)
+# propagate(video_folder, drawn_folder, output_folder)
