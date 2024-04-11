@@ -48,7 +48,7 @@ def process_frame(image_path):
 # Process all PNG frames in a directory
 frames_directory = 'video_data1'
 for frame in os.listdir(frames_directory):
-    if frame.endswith('.jpg'):
+    if frame.endswith('.jpg') or frame.endswith('.png'):
         process_frame(os.path.join(frames_directory, frame))
 
 cv2.destroyAllWindows()
