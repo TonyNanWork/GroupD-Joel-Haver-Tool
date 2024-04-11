@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLa
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize
 from scenechange import detect_scene_changes_from_images
+from propagate import propagate, check_folder
 
 import natsort
 
@@ -19,7 +20,7 @@ class VideoPlayer(QWidget):
         self.isPlaying = False
 
         self.initUI()
-        self.selectFolder()
+        #self.selectFolder()
 
     def initUI(self):
         self.mainLayout = QVBoxLayout()  # Main layout
@@ -37,7 +38,6 @@ class VideoPlayer(QWidget):
 
         self.frameList.setFixedWidth(120)  # Set fixed width for the list
         self.videoLayout.addWidget(self.frameList)
-        
         self.mainLayout.addLayout(self.videoLayout)
 
         # Filename label
@@ -64,10 +64,25 @@ class VideoPlayer(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.nextFrame)
+        
+        # video folder button
+        self.videoframeButton = QPushButton("Select Video Folder")
+        self.videoframeButton.clicked.connect(self.selectFolder)
+        self.controlsLayout.addWidget(self.videoframeButton)
+        
+        #  keyframe finder button
+        self.keyframesButton = QPushButton("Find Keyframes")
+        self.keyframesButton.clicked.connect(self.get_keyframes)
+        self.controlsLayout.addWidget(self.keyframesButton)
+        
+        # Propogate Button
+        self.propogateButton = QPushButton("Propogate")
+        self.propogateButton.clicked.connect(self.flow_propogation)
+        self.controlsLayout.addWidget(self.propogateButton)
 
     def playVideo(self):
         if not self.isPlaying:
-            self.timer.start(100)  # Adjust the frame rate as needed
+            self.timer.start(30)  # Adjust the frame rate as needed
             self.isPlaying = True
 
     def stopVideo(self):
@@ -87,6 +102,18 @@ class VideoPlayer(QWidget):
             self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
 
             self.showNextFrame()
+
+    def get_keyframes(self):
+        pass
+
+    def flow_propogation(self):
+        if self.frame_folder:
+            video = self.frame_folder  # Assuming the video data folder is the same as the frame folder
+            drawn = "drawn"
+            output = "output"
+            propagate(video, drawn, output)
+        else:
+            print("Please select a folder containing video frames before performing optical flow.")
 
 
     def populateFrameList(self):
@@ -168,7 +195,7 @@ class VideoPlayer(QWidget):
 def main():
     app = QApplication(sys.argv)
     player = VideoPlayer()
-    player.resize(1000, 800)  # Adjust the initial size as needed
+    player.resize(1600, 900)  # Adjust the initial size as needed
     player.show()
     sys.exit(app.exec_())
 
