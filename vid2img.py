@@ -1,14 +1,14 @@
 import cv2, os, shutil
-vidcap = cv2.VideoCapture('video_src/2.mp4')
+vidcap = cv2.VideoCapture('video_src/8a.mp4')
 
-if(not os.path.isdir('video_data')):
-    os.mkdir("video_data")
+if(not os.path.isdir('video_data1')):
+    os.mkdir("video_data1")
 
 success, image = vidcap.read()
 
 # simple file to 
-for filename in os.listdir("video_data"):
-    file_path = os.path.join("video_data", filename)
+for filename in os.listdir("video_data1"):
+    file_path = os.path.join("video_data1", filename)
     try:
         if os.path.isfile(file_path) or os.path.islink(file_path):
             os.unlink(file_path)
@@ -19,6 +19,6 @@ for filename in os.listdir("video_data"):
 
 frame = 1
 while success:
-  cv2.imwrite('video_data/%d.png' % frame, image)    
+  cv2.imwrite('video_data1/%d.jpg' % frame, image)    
   success, image = vidcap.read()
   frame += 1

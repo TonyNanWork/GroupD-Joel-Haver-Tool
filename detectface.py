@@ -20,7 +20,7 @@ def process_frame(image_path):
     eye_cascade = cv2.CascadeClassifier('haarcascade_eye_tree_eyeglasses.xml')
 
     # detects faces in the input image
-    faces = face_cascade.detectMultiScale(gray, 1.3, 4)
+    faces = face_cascade.detectMultiScale(gray, 1.5, 9)
     print('Number of detected faces:', len(faces))
     roi_gray = None
     roi_color = None
@@ -31,6 +31,7 @@ def process_frame(image_path):
     
     # detects eyes of within the detected face area (roi)
     eyes = eye_cascade.detectMultiScale(roi_gray)
+    print(eyes)
     
     # draw a rectangle around eyes
     for (ex,ey,ew,eh) in eyes:
@@ -46,7 +47,7 @@ def process_frame(image_path):
 
 
 # Process all PNG frames in a directory
-frames_directory = 'video_data1'
+frames_directory = 'video_data'
 for frame in os.listdir(frames_directory):
     if frame.endswith('.jpg') or frame.endswith('.png'):
         process_frame(os.path.join(frames_directory, frame))

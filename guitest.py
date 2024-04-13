@@ -6,6 +6,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize
 from scenechange import detect_scene_changes_from_images
 from propagate import propagate, check_folder
+from faceLandmarkDetector import getBestMouth
 
 import natsort
 
@@ -14,6 +15,8 @@ class VideoPlayer(QWidget):
         super().__init__()
         self.frame_folder = ""
         self.scene_files = [[]]
+        self.scene_keyFrames = [[]]
+
         self.frame_files = []
         self.current_scene = 0
         self.current_frame = 0
@@ -25,8 +28,20 @@ class VideoPlayer(QWidget):
     def initUI(self):
         self.mainLayout = QVBoxLayout()  # Main layout
 
-        # Video display
         self.videoLayout = QHBoxLayout()
+        # KeyFrame List 
+
+        self.keyframeList = QListWidget()
+        self.keyframeList.setViewMode(QListWidget.IconMode)
+        self.keyframeList.currentRowChanged.connect(self.listKeyFrameChanged)
+        self.keyframeList.setIconSize(QSize(200, 200))  # Ensure the icon size is set
+
+        self.keyframeList.setFixedWidth(120)  # Set fixed width for the list
+        self.videoLayout.addWidget(self.keyframeList)
+        
+
+        # Video display
+
         self.label = QLabel(self)
         self.videoLayout.addWidget(self.label)
 
@@ -38,6 +53,7 @@ class VideoPlayer(QWidget):
 
         self.frameList.setFixedWidth(120)  # Set fixed width for the list
         self.videoLayout.addWidget(self.frameList)
+
         self.mainLayout.addLayout(self.videoLayout)
 
         # Filename label
@@ -104,7 +120,42 @@ class VideoPlayer(QWidget):
             self.showNextFrame()
 
     def get_keyframes(self):
-        pass
+        self.scene_keyFrames[self.current_scene] = getBestMouth(self.frame_folder,self.scene_files[self.current_scene])
+
+        self.keyframeList.clear()
+
+
+        thumbnailSize = 150  # Desired thumbnail size
+
+        for image in self.scene_keyFrames[self.current_scene]:
+            frame_path = os.path.join(self.frame_folder, image)
+
+            #frame_path = os.path.join(self.frame_folder, filename)
+            pixmap = QPixmap(frame_path)
+
+        # Scale the pixmap to the thumbnail size while maintaining aspect ratio
+            scaledPixmap = pixmap.scaled(thumbnailSize, thumbnailSize, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        # Create an icon from the scaled pixmap
+            icon = QIcon(scaledPixmap)
+
+        # Create a list item and set its icon
+            item = QListWidgetItem()
+            item.setIcon(icon)
+
+ 
+            item.setSizeHint(scaledPixmap.size())
+            self.keyframeList.addItem(item)
+
+
+            
+            
+            
+
+    # Adjust the width of the QListWidget to accommodate the larger thumbnails
+        self.frameList.setFixedWidth(thumbnailSize + 20)  # Adjust based on your UI needs
+        print(self.scene_keyFrames[self.current_scene])
+        
 
     def flow_propogation(self):
         if self.frame_folder:
@@ -114,7 +165,7 @@ class VideoPlayer(QWidget):
             propagate(video, drawn, output)
         else:
             print("Please select a folder containing video frames before performing optical flow.")
-
+    
 
     def populateFrameList(self):
         self.frameList.clear()
@@ -153,6 +204,8 @@ class VideoPlayer(QWidget):
 
                 scene_num = scene_num + 1
                 self.scene_files.append([])
+                self.scene_keyFrames.append([])
+
             self.scene_files[scene_num - 1].append(filename)
             
             
@@ -191,6 +244,12 @@ class VideoPlayer(QWidget):
             self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
             self.slider.setValue(0)
             self.showNextFrame()
+
+    def listKeyFrameChanged(self, currentRow):
+        index = self.scene_files[self.current_scene].index(self.scene_keyFrames[self.current_scene][currentRow])
+        self.current_frame = index
+        self.slider.setValue(index)
+        self.showNextFrame()
 
 def main():
     app = QApplication(sys.argv)
