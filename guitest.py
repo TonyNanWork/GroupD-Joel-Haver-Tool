@@ -30,7 +30,6 @@ class PropagateWorker(QObject):
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error occurred: {str(e)}")
             return
-        self.progress_callback.emit(100)
         
     def updateBar(self, progress):
         self.progress_callback.emit(progress)
@@ -127,6 +126,7 @@ class VideoPlayer(QWidget):
         self.progressBar = QProgressBar()
         self.progressBar.setMinimum(0)
         self.progressBar.setMaximum(100)
+        self.progressBar.hide()
         self.mainLayout.addWidget(self.progressBar) 
         
         self.setLayout(self.mainLayout)
@@ -204,23 +204,25 @@ class VideoPlayer(QWidget):
         print(self.scene_keyFrames[self.current_scene])
         
     def startPropagation(self):
+        self.progressBar.show()
         self.propagateButton.setEnabled(False)
-        self.worker_thread = threading.Thread(target=self.flowPropagation)
-        self.worker_thread.start()
+        self.propagation_thread = threading.Thread(target=self.flowPropagation)
+        self.propagation_thread.start()
 
     def flowPropagation(self):
         video = self.frame_folder  # Assuming the video data folder is the same as the frame folder
         drawn = "drawn"
         output = "output"
-        self.worker_thread = PropagateWorker(video, drawn, output)
-        self.worker_thread.progress_callback.connect(self.updateProgress)
-        self.worker_thread.run()
+        self.propagation_worker = PropagateWorker(video, drawn, output)
+        self.propagation_worker.progress_callback.connect(self.updateProgress, Qt.UniqueConnection)
+        self.propagation_worker.run()
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)
         
         if value >= 100:
             QMessageBox.information(None, "Complete", "Processing complete!")
+            #self.progressBar.hide()
             self.propagateButton.setEnabled(True)
 
     def populateFrameList(self):
