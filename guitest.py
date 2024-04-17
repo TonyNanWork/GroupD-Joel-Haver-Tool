@@ -1,19 +1,45 @@
 import sys
 import os
+from tkinter.ttk import Progressbar
 from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QListWidget,
-                             QListWidgetItem, QSlider, QPushButton, QSizePolicy)
+                             QListWidgetItem, QSlider, QPushButton, QSizePolicy, QProgressBar, QMessageBox)
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import QTimer, Qt, QSize
+from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QObject
 from scenechange import detect_scene_changes_from_images
-from propagate import propagate, check_folder
+from propagate import propagate, checkFolder
 from faceLandmarkDetector import getBestMouth
 
-import natsort
+import natsort, cv2
+from vid2img import vid2img
+from img2vid import img2vid
+import threading
+
+class PropagateWorker(QObject):
+    
+    progress_callback = pyqtSignal(int)
+
+    def __init__(self, video, drawn, output):
+        super().__init__()
+        self.video = video
+        self.drawn = drawn
+        self.output = output
+
+    def run(self):
+        try:
+            propagate(self.video, self.drawn, self.output, self.updateBar)
+        except Exception as e:
+            QMessageBox.critical(None, "Error", f"Error occurred: {str(e)}")
+            return
+        self.progress_callback.emit(100)
+        
+    def updateBar(self, progress):
+        self.progress_callback.emit(progress)
+
 
 class VideoPlayer(QWidget):
     def __init__(self):
         super().__init__()
-        self.frame_folder = ""
+        self.frame_folder = "video_data"
         self.scene_files = [[]]
         self.scene_keyFrames = [[]]
 
@@ -39,9 +65,7 @@ class VideoPlayer(QWidget):
         self.keyframeList.setFixedWidth(120)  # Set fixed width for the list
         self.videoLayout.addWidget(self.keyframeList)
         
-
         # Video display
-
         self.label = QLabel(self)
         self.videoLayout.addWidget(self.label)
 
@@ -76,25 +100,36 @@ class VideoPlayer(QWidget):
         self.slider.valueChanged.connect(self.sliderChanged)
         self.mainLayout.addWidget(self.slider)
 
-        self.setLayout(self.mainLayout)
-
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.nextFrame)
         
         # video folder button
-        self.videoframeButton = QPushButton("Select Video Folder")
-        self.videoframeButton.clicked.connect(self.selectFolder)
-        self.controlsLayout.addWidget(self.videoframeButton)
+        # self.videoframeButton = QPushButton("Select Video Folder")
+        # self.videoframeButton.clicked.connect(self.selectFolder)
+        # self.controlsLayout.addWidget(self.videoframeButton)
+        
+        # video folder        
+        self.videoButton = QPushButton("Select Video File")
+        self.videoButton.clicked.connect(self.selectVideo)
+        self.controlsLayout.addWidget(self.videoButton)
         
         #  keyframe finder button
         self.keyframesButton = QPushButton("Find Keyframes")
-        self.keyframesButton.clicked.connect(self.get_keyframes)
+        self.keyframesButton.clicked.connect(self.getKeyframes)
         self.controlsLayout.addWidget(self.keyframesButton)
         
         # Propogate Button
-        self.propogateButton = QPushButton("Propogate")
-        self.propogateButton.clicked.connect(self.flow_propogation)
-        self.controlsLayout.addWidget(self.propogateButton)
+        self.propagateButton = QPushButton("Propagate Drawn Frames")
+        self.propagateButton.clicked.connect(self.startPropagation)
+        self.controlsLayout.addWidget(self.propagateButton)
+        
+        # Add progress bar for frame propagation
+        self.progressBar = QProgressBar()
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(100)
+        self.mainLayout.addWidget(self.progressBar) 
+        
+        self.setLayout(self.mainLayout)
 
     def playVideo(self):
         if not self.isPlaying:
@@ -118,13 +153,30 @@ class VideoPlayer(QWidget):
             self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
 
             self.showNextFrame()
+            
+    def selectVideo(self):
+        video_file, _ = QFileDialog.getOpenFileName(self, "Select Video File")
+        if video_file:
+            # Convert video file to frames
+            vid2img(video_file)
+            
+            self.frame_folder = "video_data"
+                # Sort the files numerically
+            self.frame_files = natsort.natsorted(
+                [f for f in os.listdir("video_data") if f.endswith('.png') or f.endswith('.jpg')]
+            )
+            
+            self.current_frame = 0
+            self.populateFrameList()
+            self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
+            self.showNextFrame()
 
-    def get_keyframes(self):
+    def getKeyframes(self):
+        
+        self.keyframesButton.setEnabled(False)
+        
         self.scene_keyFrames[self.current_scene] = getBestMouth(self.frame_folder,self.scene_files[self.current_scene])
-
         self.keyframeList.clear()
-
-
         thumbnailSize = 150  # Desired thumbnail size
 
         for image in self.scene_keyFrames[self.current_scene]:
@@ -143,29 +195,33 @@ class VideoPlayer(QWidget):
             item = QListWidgetItem()
             item.setIcon(icon)
 
- 
             item.setSizeHint(scaledPixmap.size())
             self.keyframeList.addItem(item)
-
-
             
-            
-            
-
-    # Adjust the width of the QListWidget to accommodate the larger thumbnails
+        # Adjust the width of the QListWidget to accommodate the larger thumbnails
         self.frameList.setFixedWidth(thumbnailSize + 20)  # Adjust based on your UI needs
+        self.keyframesButton.setEnabled(True)
         print(self.scene_keyFrames[self.current_scene])
         
+    def startPropagation(self):
+        self.propagateButton.setEnabled(False)
+        self.worker_thread = threading.Thread(target=self.flowPropagation)
+        self.worker_thread.start()
 
-    def flow_propogation(self):
-        if self.frame_folder:
-            video = self.frame_folder  # Assuming the video data folder is the same as the frame folder
-            drawn = "drawn"
-            output = "output"
-            propagate(video, drawn, output)
-        else:
-            print("Please select a folder containing video frames before performing optical flow.")
+    def flowPropagation(self):
+        video = self.frame_folder  # Assuming the video data folder is the same as the frame folder
+        drawn = "drawn"
+        output = "output"
+        self.worker_thread = PropagateWorker(video, drawn, output)
+        self.worker_thread.progress_callback.connect(self.updateProgress)
+        self.worker_thread.run()
     
+    def updateProgress(self, value):
+        self.progressBar.setValue(value)
+        
+        if value >= 100:
+            QMessageBox.information(None, "Complete", "Processing complete!")
+            self.propagateButton.setEnabled(True)
 
     def populateFrameList(self):
         self.frameList.clear()
@@ -208,12 +264,8 @@ class VideoPlayer(QWidget):
 
             self.scene_files[scene_num - 1].append(filename)
             
-            
-
     # Adjust the width of the QListWidget to accommodate the larger thumbnails
         self.frameList.setFixedWidth(thumbnailSize + 20)  # Adjust based on your UI needs
-
-
 
     def showNextFrame(self):
         if self.frame_files and self.current_frame < len(self.scene_files[self.current_scene]):

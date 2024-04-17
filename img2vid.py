@@ -4,7 +4,7 @@ import natsort
 # import time
 
 # Converts images in folder to video
-def images_to_video(image_folder, video_name, fps=30):
+def img2vid(image_folder, video_name, fps=30):
     
     #start = time.time()
     images = natsort.natsorted(
@@ -29,6 +29,6 @@ def images_to_video(image_folder, video_name, fps=30):
     #end = time.time()
     #print(end-start)
 
-folder_path = "output"
-output_video_name = "output.avi"
-images_to_video(folder_path, output_video_name)
+# folder_path = "output"
+# output_video_name = "output.avi"
+# images_to_video(folder_path, output_video_name)

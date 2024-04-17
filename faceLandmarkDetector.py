@@ -8,9 +8,7 @@ import os
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')  # Ensure the model file is in the correct location
 
-
-
-def get_mouth_size(landmarks):
+def getMouthSize(landmarks):
     mouth_width = landmarks[54][0] - landmarks[48][0]
     mouth_height = landmarks[57][1] - landmarks[51][1]
     return mouth_width * mouth_height
@@ -37,7 +35,7 @@ def getBestMouth(folder_path,frame_list):
                 landmarks = predictor(gray, face)
                 landmarks = [(p.x, p.y) for p in landmarks.parts()]
                 
-                mouth_size = get_mouth_size(landmarks) 
+                mouth_size = getMouthSize(landmarks) 
                 if mouth_size > largest_mouth_size:
                     largest_mouth_size = mouth_size
                     image_with_largest_mouth = filename

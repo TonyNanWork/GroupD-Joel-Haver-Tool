@@ -1,20 +1,9 @@
 import os, cv2, natsort
 import numpy as np
 
-# Compute optical flow using gradient constraint equation
-# def compute_optical_flow(image1, image2):
-#     gradient_x = cv2.Sobel(image1, cv2.CV_64F, 1, 0, ksize=5)
-#     gradient_y = cv2.Sobel(image1, cv2.CV_64F, 0, 1, ksize=5)
-    
-    
-#     temporal_gradient = image2 - image1
+from PyQt5.QtCore import QObject, pyqtSignal
 
-#     flow_x = -gradient_x * temporal_gradient
-#     flow_y = -gradient_y * temporal_gradient
-    
-#     return flow_x, flow_y
-
-def compute_optical_flow(im1, im2):
+def computeOpticalFlow(im1, im2):
     #prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
     #next_gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
 
@@ -28,7 +17,7 @@ def compute_optical_flow(im1, im2):
     return flow
 
 # 
-def compute_optical_flow_manual(prev_frame, next_frame, window_size=2):
+def computeOpticalFlowManual(prev_frame, next_frame, window_size=2):
     height, width = prev_frame.shape
 
     # Compute derivatives of the first frame
@@ -65,7 +54,7 @@ def compute_optical_flow_manual(prev_frame, next_frame, window_size=2):
     return flow
 
 # warp drawn frame using flow
-def warp_frame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
+def warpFrame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
     
     flow_x = flow[...,0]
     flow_y = flow[...,1]
@@ -88,7 +77,7 @@ def warp_frame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
     
     return cv2.remap(drawn_frame, map_x, map_y, interpolation)
 
-def visualize_optical_flow(flow):
+def visualizeOpticalFlow(flow):
     # Split the flow into x and y components
     flow_x = flow[...,0]
     flow_y = flow[...,1]
@@ -115,14 +104,14 @@ def visualize_optical_flow(flow):
     
     return flow_visualization
 
-def check_folder(folder):
+def checkFolder(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
         
-def get_video_frames(folder):
+def getVideoFrames(folder):
     return natsort.natsorted(f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('jpg'))
     
-def get_drawn_frames(folder):
+def getDrawnFrames(folder):
     drawn_frames = {}
     for drawn_frame_name in os.listdir(folder):
         drawn_frame_path = os.path.join(folder, drawn_frame_name)
@@ -131,52 +120,40 @@ def get_drawn_frames(folder):
         drawn_frames[drawn_frame_index] = drawn_frame
     return drawn_frames
 
-def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder):
-    
-    video_frames = get_video_frames(video_frame_folder)
-    #print(video_frames)
-    drawn_frames = get_drawn_frames(drawn_frame_folder)
+def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progress_callback):
 
-    # drawn_frames_mapping = {i: cv2.imread(os.path.join(drawn_frame_folder, frame)) for i, frame in enumerate(drawn_frames)}
+    video_frames = getVideoFrames(video_frame_folder)
+    #print(video_frames)
+    drawn_frames = getDrawnFrames(drawn_frame_folder)
+    
+    total_frames = int(len(video_frames)) - 1
+    processed_frames = 0
     
     # Iterate over each video frame and propagate the drawn style
-    for i in range(int(len(video_frames) - 1)):
-        
+    for i in range(total_frames):
         video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i]))
         next_video_frame = cv2.imread(os.path.join(video_frame_folder, video_frames[i+1]))
-
         # Find the closest drawn frame's index 
         closest_drawn = min(drawn_frames.keys(), key=lambda x: abs(x - i))
-        # closest_drawn_frame = drawn_frames_mapping[clo]
-        
+
         # Compute optical flow between consecutive video frames
-        # flow = compute_optical_flow(video_frame.mean(-1), next_video_frame.mean(-1))
-        flow = compute_optical_flow(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
+        flow = computeOpticalFlow(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
         
         #flow_visualization = visualize_optical_flow(flow)
         #flow_output_path = os.path.join("flow", f"flow_{os.path.splitext(video_frames[i])[0]}.png")
         #cv2.imwrite(flow_output_path, flow_visualization)
         
         # Warp the frame
-        warped = warp_frame(flow, drawn_frames[closest_drawn])
-
+        warped = warpFrame(flow, drawn_frames[closest_drawn])
         # Save the frame
         output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.jpg')
         cv2.imwrite(output_frame, warped)
         
+        processed_frames += 1
+        progress = int(processed_frames * 100 / total_frames)
+        progress_callback(progress)
         
-        # flow = compute_optical_flow_manual(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
-        # warped = warp_frame(flow, drawn_frames[closest_drawn])
         
-        # flow_visualization = visualize_optical_flow(flow)
-        # flow_output_path = os.path.join("flow", f"manual_flow_{os.path.splitext(video_frames[i])[0]}.png")
-        # cv2.imwrite(flow_output_path, flow_visualization)
-        
-        # output_frame = os.path.join(output_frame_folder, f'm{os.path.splitext(video_frames[i])[0]}.jpg')
-        # cv2.imwrite(output_frame, warped)
-        
-        #print(f"Done frame {i+1}")
-
 # video_folder = 'video_data'
 # drawn_folder = 'drawn'
 # output_folder = 'output'
