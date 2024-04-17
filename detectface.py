@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 
-def process_frame(image_path):
+def processFrame(image_path):
     # import required libraries
 
     # read input image
@@ -50,6 +50,6 @@ def process_frame(image_path):
 frames_directory = 'video_data'
 for frame in os.listdir(frames_directory):
     if frame.endswith('.jpg') or frame.endswith('.png'):
-        process_frame(os.path.join(frames_directory, frame))
+        processFrame(os.path.join(frames_directory, frame))
 
 cv2.destroyAllWindows()
