@@ -3,7 +3,7 @@ import numpy as np
 import os
 import natsort
 
-def detect_scene_changes_from_images(frames_dir, threshold=60):
+def detectSceneChanges(frames_dir, threshold=60):
     frame_files = None
     if (type(frames_dir) == str):
     # List all frame images in the directory sorted by name
@@ -48,5 +48,5 @@ def detect_scene_changes_from_images(frames_dir, threshold=60):
 if __name__ == "__main__":
 
     frames_dir = 'video_data1'
-    scene_changes = detect_scene_changes_from_images(frames_dir)
+    scene_changes = detectSceneChanges(frames_dir)
     print("Scene changes at images:", scene_changes)

@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLa
                              QListWidgetItem, QSlider, QPushButton, QSizePolicy, QProgressBar, QMessageBox)
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QObject
-from scenechange import detect_scene_changes_from_images
+from scenechange import detectSceneChanges
 from propagate import propagate, checkFolder
 from faceLandmarkDetector import getBestMouth
 
@@ -226,7 +226,7 @@ class VideoPlayer(QWidget):
     def populateFrameList(self):
         self.frameList.clear()
 
-        changes = detect_scene_changes_from_images(self.frame_folder)
+        changes = detectSceneChanges(self.frame_folder)
         print(changes)
         changes.insert(0,self.frame_files[0])
         changes.append("placeholder")
