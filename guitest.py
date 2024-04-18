@@ -122,6 +122,11 @@ class VideoPlayer(QWidget):
         self.propagateButton = QPushButton("Propagate Drawn Frames")
         self.propagateButton.clicked.connect(self.startPropagation)
         self.controlsLayout.addWidget(self.propagateButton)
+
+        # Propogate Button
+        self.selectDrawnFrames = QPushButton("Select Drawn Frames")
+        self.selectDrawnFrames.clicked.connect(self.selectDrawnFrame)
+        self.controlsLayout.addWidget(self.selectDrawnFrames)
         
         # Add progress bar for frame propagation
         self.progressBar = QProgressBar()
@@ -130,6 +135,15 @@ class VideoPlayer(QWidget):
         self.mainLayout.addWidget(self.progressBar) 
         
         self.setLayout(self.mainLayout)
+
+    def selectDrawnFrame(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder With Frames")
+        if folder:
+            self.drawn_folder = folder
+            # Sort the files numerically - adds some extra wait time though
+            self.drawn_frame_files = natsort.natsorted(
+                [f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('.jpg')]
+            )
 
     def playVideo(self):
         if not self.isPlaying:
@@ -210,7 +224,7 @@ class VideoPlayer(QWidget):
 
     def flowPropagation(self):
         video = self.frame_folder  # Assuming the video data folder is the same as the frame folder
-        drawn = "drawn"
+        drawn = self.drawn_folder
         output = "output"
         self.worker_thread = PropagateWorker(video, drawn, output)
         self.worker_thread.progress_callback.connect(self.updateProgress)
