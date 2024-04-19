@@ -13,6 +13,8 @@ import natsort, cv2
 from vid2img import vid2img
 from img2vid import img2vid
 import threading
+import shutil
+
 
 class PropagateWorker(QObject):
     
@@ -193,8 +195,10 @@ class VideoPlayer(QWidget):
         self.keyframeList.clear()
         thumbnailSize = 150  # Desired thumbnail size
 
-        for image in self.scene_keyFrames[self.current_scene]:
-            frame_path = os.path.join(self.frame_folder, image)
+        for file_path in self.scene_keyFrames[self.current_scene]:
+            frame_path = os.path.join(self.frame_folder, file_path)
+            
+            shutil.copyfile(frame_path, "keyframes/"+ file_path)
 
             #frame_path = os.path.join(self.frame_folder, filename)
             pixmap = QPixmap(frame_path)
@@ -213,9 +217,10 @@ class VideoPlayer(QWidget):
             self.keyframeList.addItem(item)
             
         # Adjust the width of the QListWidget to accommodate the larger thumbnails
+
+
         self.frameList.setFixedWidth(thumbnailSize + 20)  # Adjust based on your UI needs
         self.keyframesButton.setEnabled(True)
-        print(self.scene_keyFrames[self.current_scene])
         
     def startPropagation(self):
         self.propagateButton.setEnabled(False)
