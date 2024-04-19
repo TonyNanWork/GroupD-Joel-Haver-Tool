@@ -13,12 +13,22 @@ def getMouthSize(landmarks):
     mouth_height = landmarks[57][1] - landmarks[51][1]
     return mouth_width * mouth_height
 
+def getEyeSize(landmarks):
+    leftEyeWidth = landmarks[44][0] - landmarks[47][0]
+    leftEyeHeight = landmarks[45][1] - landmarks[48][1]
+
+    rightEyeWidth = landmarks[38][0] - landmarks[41][0]
+    rightEyeHeight  = landmarks[39][1] - landmarks[42][1]
+    return leftEyeWidth * leftEyeHeight + rightEyeWidth * rightEyeHeight
+
 def getBestMouth(folder_path,frame_list):
 
     returnlist = []
 
     largest_mouth_size = 0
     image_with_largest_mouth = None
+    
+    print(frame_list)
 
     # Process each image in the folder
     for filename in frame_list:

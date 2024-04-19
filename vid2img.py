@@ -23,6 +23,8 @@ def vid2img(vid_src):
 
     frame = 1
     while success:
-        cv2.imwrite('video_data/%d.jpg' % frame, image)    
+        frame_num = '%d' % frame
+        frame_num = frame_num.zfill(4)
+        cv2.imwrite('video_data/'+ frame_num +'.jpg' , image)    
         success, image = vidcap.read()
         frame += 1
