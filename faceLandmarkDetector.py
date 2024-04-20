@@ -21,18 +21,19 @@ def getEyeSize(landmarks):
     rightEyeHeight  = landmarks[39][1] - landmarks[42][1]
     return leftEyeWidth * leftEyeHeight + rightEyeWidth * rightEyeHeight
 
-def getBestMouth(folder_path,frame_list):
-
+def getBestFrame(folder_path,frame_list, threshold = 25):
     returnlist = []
 
-    largest_mouth_size = 0
-    image_with_largest_mouth = None
+    largest_features = 0
+    best_image = None
     
-    print(frame_list)
-
+    count = 0
     # Process each image in the folder
+    previous_frame = None
     for filename in frame_list:
+        
         if filename.endswith(('.png', '.jpg', '.jpeg')):
+
             image_path = os.path.join(folder_path, filename)
             image = cv2.imread(image_path)
             if image is None:
@@ -46,9 +47,34 @@ def getBestMouth(folder_path,frame_list):
                 landmarks = [(p.x, p.y) for p in landmarks.parts()]
                 
                 mouth_size = getMouthSize(landmarks) 
-                if mouth_size > largest_mouth_size:
-                    largest_mouth_size = mouth_size
-                    image_with_largest_mouth = filename
-    returnlist.append(image_with_largest_mouth)
+                eye_size = getMouthSize(landmarks) 
+                eye_mouth = mouth_size + eye_size
+                if mouth_size > largest_features:
+                    largest_features = eye_mouth
+                    best_image = filename
+
+
+            gray = cv2.GaussianBlur(gray, (21, 21), 0)
+            gray = cv2.resize(gray,(0, 0),fx=0.5, fy=0.5)
+
+            if count > 0:
+                print(filename)
+                frame_delta = cv2.absdiff(previous_frame, gray)
+                thresh = cv2.threshold(frame_delta, threshold, 255, cv2.THRESH_BINARY)[1]
+            
+                # Find the percentage of changed pixels
+                change_percent = np.sum(thresh) / thresh.size
+                
+                if change_percent > threshold:
+                    print("change found")
+                    #print(f"Scene change detected at image: {frame_file}")
+                    returnlist.append(best_image)
+                    largest_features = 0
+                    best_image = filename
+    
+
+            previous_frame = gray.copy()
+            count = count + 1
+    returnlist.append(best_image)
     return returnlist
 

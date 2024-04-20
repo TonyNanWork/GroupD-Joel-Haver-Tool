@@ -19,7 +19,7 @@ def detectSceneChanges(frames_dir, threshold=60):
     prev_frame = cv2.imread(os.path.join(frames_dir, frame_files[0]))
    
     prev_frame_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-    #prev_frame_gray = cv2.resize(prev_frame_gray,fx=0.5, fy=0.5)
+    prev_frame_gray = cv2.resize(prev_frame_gray,(0, 0),fx=0.5, fy=0.5)
     prev_frame_gray = cv2.GaussianBlur(prev_frame_gray, (21, 21), 0)
 
     scene_changes = []
@@ -27,6 +27,7 @@ def detectSceneChanges(frames_dir, threshold=60):
     for idx, frame_file in enumerate(frame_files[1:], start=1):  # Start from the second image
         frame = cv2.imread(os.path.join(frames_dir, frame_file))
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.resize(gray,(0, 0),fx=0.5, fy=0.5)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
         # Calculate the absolute difference between current frame and previous frame

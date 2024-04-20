@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QObject
 from scenechange import detectSceneChanges
 from propagate import propagate, checkFolder
-from faceLandmarkDetector import getBestMouth
+from faceLandmarkDetector import getBestFrame
 
 import natsort, cv2
 from vid2img import vid2img
@@ -165,7 +165,7 @@ class VideoPlayer(QWidget):
 
     def playVideo(self):
         if not self.isPlaying:
-            self.timer.start(30)  # Adjust the frame rate as needed
+            self.timer.start(25)  # Adjust the frame rate as needed
             self.isPlaying = True
 
     def stopVideo(self):
@@ -214,9 +214,11 @@ class VideoPlayer(QWidget):
         
         self.keyframesButton.setEnabled(False)
         
-        self.scene_keyFrames[self.current_scene] = getBestMouth(self.frame_folder,self.scene_files[self.current_scene])
+        self.scene_keyFrames[self.current_scene] = getBestFrame(self.frame_folder,self.scene_files[self.current_scene],30)
         self.keyframeList.clear()
         thumbnailSize = 150  # Desired thumbnail size
+
+        print(self.scene_keyFrames[self.current_scene])
 
         for file_path in self.scene_keyFrames[self.current_scene]:
             frame_path = os.path.join(self.frame_folder, file_path)
@@ -282,7 +284,6 @@ class VideoPlayer(QWidget):
         self.frameList.clear()
 
         changes = detectSceneChanges(self.frame_folder)
-        print(changes)
         changes.insert(0,self.frame_files[0])
         changes.append("placeholder")
 
