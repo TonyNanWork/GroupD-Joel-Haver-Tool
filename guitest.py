@@ -92,48 +92,57 @@ class VideoPlayer(QWidget):
         self.filenameLabel.setAlignment(Qt.AlignCenter)  # Center align the text
         self.mainLayout.addWidget(self.filenameLabel)
 
-        # Controls for play and stop
         self.controlsLayout = QHBoxLayout()
+
+        # video folder        
+        self.videoButton = QPushButton("Select Video File")
+        self.videoButton.clicked.connect(self.selectVideo)
+        self.controlsLayout.addWidget(self.videoButton)
+
+        # Controls for play and stop
         self.playButton = QPushButton("Play")
         self.playButton.clicked.connect(self.playVideo)
-        self.stopButton = QPushButton("Stop")
-        self.stopButton.clicked.connect(self.stopVideo)
+        self.playButton.setEnabled(False)
         self.controlsLayout.addWidget(self.playButton)
+        
+        self.stopButton = QPushButton("Pause")
+        self.stopButton.clicked.connect(self.stopVideo)
+        self.stopButton.setEnabled(False)
         self.controlsLayout.addWidget(self.stopButton)
-        self.mainLayout.addLayout(self.controlsLayout)
+        
+        
 
         # Timeline slider
         self.slider = QSlider(Qt.Horizontal)
         self.slider.valueChanged.connect(self.sliderChanged)
+        self.slider.setEnabled(False)
         self.mainLayout.addWidget(self.slider)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.nextFrame)
         
-        # video folder button
-        # self.videoframeButton = QPushButton("Select Video Folder")
-        # self.videoframeButton.clicked.connect(self.selectFolder)
-        # self.controlsLayout.addWidget(self.videoframeButton)
-        
-        # video folder        
-        self.videoButton = QPushButton("Select Video File")
-        self.videoButton.clicked.connect(self.selectVideo)
-        self.controlsLayout.addWidget(self.videoButton)
-        
         #  keyframe finder button
         self.keyframesButton = QPushButton("Find Keyframes")
         self.keyframesButton.clicked.connect(self.getKeyframes)
+        self.keyframesButton.setEnabled(False)
         self.controlsLayout.addWidget(self.keyframesButton)
+        
+        # Select Drawn Frames Button
+        self.selectDrawnButton = QPushButton("Select Drawn Frame(s) Folder")
+        self.selectDrawnButton.clicked.connect(self.selectDrawnFrame)
+        self.selectDrawnButton.setEnabled(False)
+        self.controlsLayout.addWidget(self.selectDrawnButton)
         
         # Propogate Button
         self.propagateButton = QPushButton("Propagate Drawn Frames")
         self.propagateButton.clicked.connect(self.startPropagation)
+        self.propagateButton.setEnabled(False)
         self.controlsLayout.addWidget(self.propagateButton)
-
-        # Propogate Button
-        self.selectDrawnFrames = QPushButton("Select Drawn Frames")
-        self.selectDrawnFrames.clicked.connect(self.selectDrawnFrame)
-        self.controlsLayout.addWidget(self.selectDrawnFrames)
+        
+        self.outputButton = QPushButton("Convert Propagated Frames to Video")
+        self.outputButton.hide()
+        self.outputButton.clicked.connect(self.outputVideo)
+        self.controlsLayout.addWidget(self.outputButton)
         
         # Add progress bar for frame propagation
         self.progressBar = QProgressBar()
@@ -142,6 +151,7 @@ class VideoPlayer(QWidget):
         self.progressBar.hide()
         self.mainLayout.addWidget(self.progressBar) 
         
+        self.mainLayout.addLayout(self.controlsLayout)
         self.setLayout(self.mainLayout)
 
     def selectDrawnFrame(self):
@@ -177,6 +187,12 @@ class VideoPlayer(QWidget):
             self.showNextFrame()
             
     def selectVideo(self):
+        self.slider.setEnabled(True)
+        self.playButton.setEnabled(True)
+        self.stopButton.setEnabled(True)
+        self.keyframesButton.setEnabled(True)
+        self.selectDrawnButton.setEnabled(True)
+        self.propagateButton.setEnabled(True)
         
         video_file, _ = QFileDialog.getOpenFileName(self, "Select Video File")
         if video_file:
@@ -237,14 +253,22 @@ class VideoPlayer(QWidget):
         output = "output"
         
         # Create an instance of PropagateWorker with propagate function and its arguments
-        self.propagation_worker = Worker(propagate, video, drawn, output)
+        self.propagationWorker = Worker(propagate, video, drawn, output)
         
         # Connect the progress_callback signal to updateProgress slot
-        self.propagation_worker.progress_callback.connect(self.updateProgress)
+        self.propagationWorker.progress_callback.connect(self.updateProgress)
         
         # Start the thread
-        self.propagation_thread = threading.Thread(target=self.propagation_worker.run)
-        self.propagation_thread.start()
+        self.propagationThread = threading.Thread(target=self.propagationWorker.run)
+        self.propagationThread.start()
+        
+        self.outputButton.show()
+    
+    def outputVideo(self):
+        self.progressBar.show()
+        self.propagateButton.setEnabled(False)
+        
+        self.outputWorker 
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)
