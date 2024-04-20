@@ -26,8 +26,6 @@ class Worker(QObject):
         self.args = args
         self.kwargs = kwargs
         self.callback = callback  # Callback function for returning the result
-        checkFolder("output")
-        checkFolder("keyframes")
 
     def run(self):
         try:
@@ -172,8 +170,6 @@ class VideoPlayer(QWidget):
         self.isPlaying = False
 
     def selectVideo(self):
-        self.enableAllButtons()
-        
         video_file, _ = QFileDialog.getOpenFileName(self, "Select Video File")
         if video_file:
             # Convert video file to frames
@@ -189,16 +185,19 @@ class VideoPlayer(QWidget):
             self.populateFrameList()
             self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
             self.showNextFrame()
+            
+            self.flipButtons(True)
 
     def getKeyframes(self):
         
-        self.keyframesButton.setEnabled(False)
+        self.flipButtons(False)
+        checkFolder("keyframes")
         
         self.scene_keyFrames[self.current_scene] = getBestFrame(self.frame_folder,self.scene_files[self.current_scene],30)
         self.keyframeList.clear()
         thumbnailSize = 150  # Desired thumbnail size
 
-        print(self.scene_keyFrames[self.current_scene])
+        # print(self.scene_keyFrames[self.current_scene])
 
         for file_path in self.scene_keyFrames[self.current_scene]:
             frame_path = os.path.join(self.frame_folder, file_path)
@@ -222,16 +221,18 @@ class VideoPlayer(QWidget):
             self.keyframeList.addItem(item)
             
         # Adjust the width of the QListWidget to accommodate the larger thumbnails
-
-
         self.frameList.setFixedWidth(thumbnailSize + 20)  # Adjust based on your UI needs
-        self.keyframesButton.setEnabled(True)
+        
+        self.flipButtons(True)
         
     def startPropagation(self):
         self.progressBar.show()
-        self.propagateButton.setEnabled(False)
+        self.flipButtons(False)
         video = self.frame_folder
+        
         drawn = "drawn"
+        
+        checkFolder("output")
         output = "output"
         
         # Create an instance of PropagateWorker with propagate function and its arguments
@@ -244,11 +245,12 @@ class VideoPlayer(QWidget):
         self.propagationThread = threading.Thread(target=self.propagationWorker.run)
         self.propagationThread.start()
         
+        self.flipButtons(True)
         self.outputButton.show()
     
     def outputVideo(self):
         self.progressBar.show()
-        self.outputButton.setEnabled(False)
+        self.flipButtons(False)
         
         self.outputWorker = Worker(img2vid, "output", "output.avi")
         self.outputWorker.progress_callback.connect(self.updateProgress)
@@ -256,7 +258,7 @@ class VideoPlayer(QWidget):
         self.outVideoThread = threading.Thread(target = self.outputWorker.run)
         self.outVideoThread.start()
         
-        self.outputButton.setEnabled(True)
+        self.flipButtons(True)
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)
@@ -345,10 +347,11 @@ class VideoPlayer(QWidget):
         self.slider.setValue(index)
         self.showNextFrame()
 
-    def enableAllButtons(self):
-        # Enable all buttons
+    def flipButtons(self, enabled):
+        # Enable/Disable all buttons
         for button in self.findChildren(QPushButton):
-            button.setEnabled(True)
+            button.setEnabled(enabled)
+        self.slider.setEnabled(enabled)
 
 def main():
     app = QApplication(sys.argv)
