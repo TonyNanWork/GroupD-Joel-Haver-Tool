@@ -4,15 +4,16 @@ import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal
 
 def computeOpticalFlow(im1, im2):
-    #prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-    #next_gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
+    im1_g = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+    im2_g = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
 
-    im1_blur = cv2.GaussianBlur(im1, (5, 5), 0)
-    im2_blur = cv2.GaussianBlur(im2, (5, 5), 0)
+    im1_blur = cv2.GaussianBlur(im1_g, (5, 5), 0)
+    im2_blur = cv2.GaussianBlur(im2_g, (5, 5), 0)
 
     # Compute dense optical flow
-    #flow = cv2.calcOpticalFlowFarneback(im1, im2, None, 0.5, 3, 15, 3, 5, 2.0, 0)
-    flow = cv2.calcOpticalFlowFarneback(im1_blur, im2_blur, None, 0.5, 5, 15, 5, 7, 1.5, 0)
+    flow = cv2.calcOpticalFlowFarneback(im1_blur, im2_blur, None, 0.7, 3, 15, 3, 5, 1.2, 0)
+    # flow = cv2.calcOpticalFlowPyrLK(im1_blur, im2_blur)
+    
     #flow = cv2.calcOpticalFlowFarneback(im1, im2, None, 0.5, 5, 15, 5, 7, 1.5, 0)
 
     return flow
@@ -55,27 +56,31 @@ def computeOpticalFlowManual(prev_frame, next_frame, window_size=2):
     return flow
 
 # warp drawn frame using flow
-def warpFrame(flow, drawn_frame, interpolation=cv2.INTER_LINEAR):
+def warpFrame(flow, drawn_frame, interpolation=cv2.INTER_LANCZOS4):
     
     flow_x = flow[...,0]
     flow_y = flow[...,1]
     h, w = flow_x.shape[:2]
-    
-    # Generate grid coordinates
-    grid_x, grid_y = np.meshgrid(np.arange(w), np.arange(h))
-    
-    # Compute destination coordinates by adding flow vectors
-    map_x = grid_x + 4 * flow_x
-    map_y = grid_y + 4 * flow_y
-    
+
+    # Generate grid coordinates with float values
+    grid_x, grid_y = np.meshgrid(np.arange(w), np.arange(h), indexing='ij')
+
+    # Transpose the grid coordinates to broadcast with flow vectors
+    map_x = grid_x.T + flow_x
+    map_y = grid_y.T + flow_y
+
+    # Round the coordinates to the nearest integer
+    map_x = np.round(map_x).astype(np.int32)
+    map_y = np.round(map_y).astype(np.int32)
+
     # Ensure destination coordinates are within image bounds
     map_x = np.clip(map_x, 0, w - 1)
     map_y = np.clip(map_y, 0, h - 1)
-    
+
     # Convert coordinates to float32
     map_x = map_x.astype(np.float32)
     map_y = map_y.astype(np.float32)
-    
+
     return cv2.remap(drawn_frame, map_x, map_y, interpolation)
 
 def visualizeOpticalFlow(flow):
@@ -138,9 +143,10 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
         closest_drawn = min(drawn_frames.keys(), key=lambda x: abs(x - i))
 
         # Compute optical flow between consecutive video frames
-        flow = computeOpticalFlow(video_frame.mean(-1), drawn_frames[closest_drawn].mean(-1))
+        flow = computeOpticalFlow(video_frame, drawn_frames[closest_drawn])
+        #flow = computeOpticalFlowManual(video_frame, drawn_frames[closest_drawn])
         
-        #flow_visualization = visualize_optical_flow(flow)
+        #flow_visualization = visualizeOpticalFlow(flow)
         #flow_output_path = os.path.join("flow", f"flow_{os.path.splitext(video_frames[i])[0]}.png")
         #cv2.imwrite(flow_output_path, flow_visualization)
         
@@ -161,9 +167,9 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
 # output_folder = 'output'
 # flow_folder = 'flow'
 
-# check_folder(video_folder)
-# check_folder(drawn_folder)
-# check_folder(output_folder)
-# check_folder(flow_folder)
+# # checkFolder(video_folder)
+# # checkFolder(drawn_folder)
+# # checkFolder(output_folder)
+# # checkFolder(flow_folder)
 
 # propagate(video_folder, drawn_folder, output_folder)
