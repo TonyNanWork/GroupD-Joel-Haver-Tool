@@ -15,7 +15,6 @@ from img2vid import img2vid
 import threading
 import shutil
 
-
 class Worker(QObject):
     
     progress_callback = pyqtSignal(int)
@@ -27,6 +26,8 @@ class Worker(QObject):
         self.args = args
         self.kwargs = kwargs
         self.callback = callback  # Callback function for returning the result
+        checkFolder("output")
+        checkFolder("keyframes")
 
     def run(self):
         try:
@@ -109,8 +110,6 @@ class VideoPlayer(QWidget):
         self.stopButton.clicked.connect(self.stopVideo)
         self.stopButton.setEnabled(False)
         self.controlsLayout.addWidget(self.stopButton)
-        
-        
 
         # Timeline slider
         self.slider = QSlider(Qt.Horizontal)
@@ -172,27 +171,8 @@ class VideoPlayer(QWidget):
         self.timer.stop()
         self.isPlaying = False
 
-    def selectFolder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Folder With Frames")
-        if folder:
-            self.frame_folder = folder
-            # Sort the files numerically - adds some extra wait time though
-            self.frame_files = natsort.natsorted(
-                [f for f in os.listdir(folder) if f.endswith('.png') or f.endswith('.jpg')]
-            )
-            self.current_frame = 0
-            self.populateFrameList()
-            self.slider.setMaximum(len(self.scene_files[self.current_scene]) - 1)
-
-            self.showNextFrame()
-            
     def selectVideo(self):
-        self.slider.setEnabled(True)
-        self.playButton.setEnabled(True)
-        self.stopButton.setEnabled(True)
-        self.keyframesButton.setEnabled(True)
-        self.selectDrawnButton.setEnabled(True)
-        self.propagateButton.setEnabled(True)
+        self.enableAllButtons()
         
         video_file, _ = QFileDialog.getOpenFileName(self, "Select Video File")
         if video_file:
@@ -200,7 +180,7 @@ class VideoPlayer(QWidget):
             vid2img(video_file)
             
             self.frame_folder = "video_data"
-                # Sort the files numerically
+            # Sort the files numerically
             self.frame_files = natsort.natsorted(
                 [f for f in os.listdir("video_data") if f.endswith('.png') or f.endswith('.jpg')]
             )
@@ -268,9 +248,15 @@ class VideoPlayer(QWidget):
     
     def outputVideo(self):
         self.progressBar.show()
-        self.propagateButton.setEnabled(False)
+        self.outputButton.setEnabled(False)
         
-        self.outputWorker 
+        self.outputWorker = Worker(img2vid, "output", "output.avi")
+        self.outputWorker.progress_callback.connect(self.updateProgress)
+        
+        self.outVideoThread = threading.Thread(target = self.outputWorker.run)
+        self.outVideoThread.start()
+        
+        self.outputButton.setEnabled(True)
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)
@@ -358,6 +344,11 @@ class VideoPlayer(QWidget):
         self.current_frame = index
         self.slider.setValue(index)
         self.showNextFrame()
+
+    def enableAllButtons(self):
+        # Enable all buttons
+        for button in self.findChildren(QPushButton):
+            button.setEnabled(True)
 
 def main():
     app = QApplication(sys.argv)

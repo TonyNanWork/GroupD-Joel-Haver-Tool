@@ -29,7 +29,7 @@ def vid2img(vid_src, progress_callback = None):
         frame_num = '%d' % frame
         #Output to test with ebsynth
         #frame_num = frame_num.zfill(4) 
-        cv2.imwrite('video_data/'+ frame_num +'.jpg' , image)    
+        cv2.imwrite('video_data/'+ frame_num +'.png' , image)    
         success, image = vidcap.read()
         frame += 1
         

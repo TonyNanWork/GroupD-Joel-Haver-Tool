@@ -13,6 +13,7 @@ def computeOpticalFlow(im1, im2):
     # Compute dense optical flow
     #flow = cv2.calcOpticalFlowFarneback(im1, im2, None, 0.5, 3, 15, 3, 5, 2.0, 0)
     flow = cv2.calcOpticalFlowFarneback(im1_blur, im2_blur, None, 0.5, 5, 15, 5, 7, 1.5, 0)
+    #flow = cv2.calcOpticalFlowFarneback(im1, im2, None, 0.5, 5, 15, 5, 7, 1.5, 0)
 
     return flow
 
@@ -146,7 +147,7 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
         # Warp the frame
         warped = warpFrame(flow, drawn_frames[closest_drawn])
         # Save the frame
-        output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.jpg')
+        output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.png')
         cv2.imwrite(output_frame, warped)
         
         if progress_callback:
