@@ -35,5 +35,4 @@ def vid2img(vid_src, progress_callback = None):
         
         if progress_callback:
             processed_frames += 1
-            progress = int(processed_frames * 100 / total_frames)
-            progress_callback(progress)
+            progress_callback(int(processed_frames * 100 / total_frames))

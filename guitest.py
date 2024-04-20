@@ -1,22 +1,17 @@
-import sys
-import os
-from tkinter.ttk import Progressbar
+import sys, os, natsort, cv2, shutil
+
 from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QListWidget,
                              QListWidgetItem, QSlider, QPushButton, QSizePolicy, QProgressBar, QMessageBox)
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QObject
+from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QObject, QThread
 from scenechange import detectSceneChanges
 from propagate import propagate, checkFolder
 from faceLandmarkDetector import getBestFrame
 
-import natsort, cv2
 from vid2img import vid2img
 from img2vid import img2vid
-import threading
-import shutil
 
-class Worker(QObject):
-    
+class Worker(QThread):
     progress_callback = pyqtSignal(int)
     result_callback = pyqtSignal(object)
 
@@ -38,7 +33,7 @@ class Worker(QObject):
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error occurred: {str(e)}")
             return
-        
+
     def update_progress(self, progress):
         self.progress_callback.emit(progress)
 
@@ -161,11 +156,15 @@ class VideoPlayer(QWidget):
             )
 
     def playVideo(self):
+        self.playButton.setEnabled(False)
+        self.stopButton.setEnabled(True)
         if not self.isPlaying:
             self.timer.start(25)  # Adjust the frame rate as needed
             self.isPlaying = True
 
     def stopVideo(self):
+        self.playButton.setEnabled(False)
+        self.stopButton.setEnabled(True)
         self.timer.stop()
         self.isPlaying = False
 
@@ -235,18 +234,14 @@ class VideoPlayer(QWidget):
         checkFolder("output")
         output = "output"
         
-        # Create an instance of PropagateWorker with propagate function and its arguments
         self.propagationWorker = Worker(propagate, video, drawn, output)
         
-        # Connect the progress_callback signal to updateProgress slot
         self.propagationWorker.progress_callback.connect(self.updateProgress)
+        self.propagationWorker.start()
         
-        # Start the thread
-        self.propagationThread = threading.Thread(target=self.propagationWorker.run)
-        self.propagationThread.start()
-        
-        self.flipButtons(True)
-        self.outputButton.show()
+        if self.propagationWorker.isFinished():
+            self.flipButtons(True)
+            self.outputButton.show()
     
     def outputVideo(self):
         self.progressBar.show()
@@ -254,11 +249,10 @@ class VideoPlayer(QWidget):
         
         self.outputWorker = Worker(img2vid, "output", "output.avi")
         self.outputWorker.progress_callback.connect(self.updateProgress)
+        self.outputWorker.start()
         
-        self.outVideoThread = threading.Thread(target = self.outputWorker.run)
-        self.outVideoThread.start()
-        
-        self.flipButtons(True)
+        if self.outputWorker.isFinished():
+            self.flipButtons(True)
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)
