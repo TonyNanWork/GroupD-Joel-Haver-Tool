@@ -16,26 +16,32 @@ import threading
 import shutil
 
 
-class PropagateWorker(QObject):
+class Worker(QObject):
     
     progress_callback = pyqtSignal(int)
+    result_callback = pyqtSignal(object)
 
-    def __init__(self, video, drawn, output):
+    def __init__(self, function, *args, callback=None, **kwargs):
         super().__init__()
-        self.video = video
-        self.drawn = drawn
-        self.output = output
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.callback = callback  # Callback function for returning the result
 
     def run(self):
         try:
-            propagate(self.video, self.drawn, self.output, self.updateBar)
+            # Call the function with provided arguments and keyword arguments
+            result = self.function(*self.args, **self.kwargs, progress_callback=self.update_progress)
+            if self.callback:  # Check if callback function is provided
+                self.callback(result)  # Call the callback function with the result
+            else:
+                self.result_callback.emit(result)  # Emit the result if no callback function
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error occurred: {str(e)}")
             return
         
-    def updateBar(self, progress):
+    def update_progress(self, progress):
         self.progress_callback.emit(progress)
-
 
 class VideoPlayer(QWidget):
     def __init__(self):
@@ -171,6 +177,7 @@ class VideoPlayer(QWidget):
             self.showNextFrame()
             
     def selectVideo(self):
+        
         video_file, _ = QFileDialog.getOpenFileName(self, "Select Video File")
         if video_file:
             # Convert video file to frames
@@ -227,16 +234,19 @@ class VideoPlayer(QWidget):
     def startPropagation(self):
         self.progressBar.show()
         self.propagateButton.setEnabled(False)
-        self.propagation_thread = threading.Thread(target=self.flowPropagation)
-        self.propagation_thread.start()
-
-    def flowPropagation(self):
-        video = self.frame_folder  # Assuming the video data folder is the same as the frame folder
-        drawn = self.drawn_folder
+        video = self.frame_folder
+        drawn = "drawn"
         output = "output"
-        self.propagation_worker = PropagateWorker(video, drawn, output)
-        self.propagation_worker.progress_callback.connect(self.updateProgress, Qt.UniqueConnection)
-        self.propagation_worker.run()
+        
+        # Create an instance of PropagateWorker with propagate function and its arguments
+        self.propagation_worker = Worker(propagate, video, drawn, output)
+        
+        # Connect the progress_callback signal to updateProgress slot
+        self.propagation_worker.progress_callback.connect(self.updateProgress)
+        
+        # Start the thread
+        self.propagation_thread = threading.Thread(target=self.propagation_worker.run)
+        self.propagation_thread.start()
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)

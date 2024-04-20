@@ -120,7 +120,7 @@ def getDrawnFrames(folder):
         drawn_frames[drawn_frame_index] = drawn_frame
     return drawn_frames
 
-def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progress_callback):
+def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progress_callback = None):
 
     video_frames = getVideoFrames(video_frame_folder)
     #print(video_frames)
@@ -149,9 +149,10 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
         output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(video_frames[i])[0]}.jpg')
         cv2.imwrite(output_frame, warped)
         
-        processed_frames += 1
-        progress = int(processed_frames * 100 / total_frames)
-        progress_callback(progress)
+        if progress_callback:
+            processed_frames += 1
+            progress = int(processed_frames * 100 / total_frames)
+            progress_callback(progress)
         
         
 # video_folder = 'video_data'
