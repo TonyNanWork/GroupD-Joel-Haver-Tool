@@ -3,9 +3,12 @@ import cv2, os, shutil
 
 # success, image = vidcap.read()
 
-def vid2img(vid_src):
+def vid2img(vid_src, progress_callback = None):
     vidcap = cv2.VideoCapture(vid_src)
     success, image = vidcap.read()
+    
+    total_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    processed_frames = 0
     
     if(not os.path.isdir('video_data')):
         os.mkdir("video_data")
@@ -28,3 +31,8 @@ def vid2img(vid_src):
         cv2.imwrite('video_data/'+ frame_num +'.jpg' , image)    
         success, image = vidcap.read()
         frame += 1
+        
+        if progress_callback:
+            processed_frames += 1
+            progress = int(processed_frames * 100 / total_frames)
+            progress_callback(progress)
