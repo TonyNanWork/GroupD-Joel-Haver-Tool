@@ -1,9 +1,10 @@
 import sys, os, natsort, cv2, shutil
 
 from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QListWidget,
-                             QListWidgetItem, QSlider, QPushButton, QSizePolicy, QProgressBar, QMessageBox)
+                             QListWidgetItem, QSlider, QPushButton, QSizePolicy, QProgressBar, QMessageBox, QComboBox, 
+                             QMenu, QAction, QToolButton)
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QObject, QThread
+from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QThread
 from scenechange import detectSceneChanges
 from propagate import propagate, checkFolder
 from faceLandmarkDetector import getBestFrame
@@ -119,12 +120,6 @@ class VideoPlayer(QWidget):
         self.keyframesButton.setEnabled(False)
         self.controlsLayout.addWidget(self.keyframesButton)
         
-        # Select Drawn Frames Button
-        self.selectDrawnButton = QPushButton("Select Drawn Frame(s) Folder")
-        self.selectDrawnButton.clicked.connect(self.selectDrawnFrame)
-        self.selectDrawnButton.setEnabled(False)
-        self.controlsLayout.addWidget(self.selectDrawnButton)
-        
         # Propogate Button
         self.propagateButton = QPushButton("Propagate Drawn Frames")
         self.propagateButton.clicked.connect(self.startPropagation)
@@ -145,6 +140,32 @@ class VideoPlayer(QWidget):
         
         self.mainLayout.addLayout(self.controlsLayout)
         self.setLayout(self.mainLayout)
+        
+        self.menu_button = QToolButton()
+        self.menu_button.setText("Extra Utilities")
+        self.menu_button.setPopupMode(QToolButton.InstantPopup)
+        
+        self.menu = QMenu()
+                
+        self.select_drawn_folder = QAction("Select Drawn Frames Folder", self)
+        self.select_drawn_folder.triggered.connect(self.selectDrawnFrame)
+        self.menu.addAction(self.select_drawn_folder)
+        
+        self.delete_propagated = QAction("Delete Propagated Output Files", self)
+        self.delete_propagated.triggered.connect(self.delete_output)
+        self.menu.addAction(self.delete_propagated)
+        
+        self.delete_data = QAction("Delete Video Frame Files", self)
+        self.delete_data.triggered.connect(self.delete_video)
+        self.menu.addAction(self.delete_data)
+        
+        self.menu_button.setMenu(self.menu)
+        self.mainLayout.addWidget(self.menu_button)
+
+    def delete_output(self):
+        shutil.rmtree("output")
+    def delete_video(self):
+        shutil.rmtree("video_data")
 
     def selectDrawnFrame(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder With Frames")
@@ -238,10 +259,8 @@ class VideoPlayer(QWidget):
         
         self.propagationWorker.progress_callback.connect(self.updateProgress)
         self.propagationWorker.start()
-        
-        if self.propagationWorker.isFinished():
-            self.flipButtons(True)
-            self.outputButton.show()
+
+        self.outputButton.show()
     
     def outputVideo(self):
         self.progressBar.show()
@@ -250,9 +269,6 @@ class VideoPlayer(QWidget):
         self.outputWorker = Worker(img2vid, "output", "output.avi")
         self.outputWorker.progress_callback.connect(self.updateProgress)
         self.outputWorker.start()
-        
-        if self.outputWorker.isFinished():
-            self.flipButtons(True)
     
     def updateProgress(self, value):
         self.progressBar.setValue(value)
@@ -260,7 +276,7 @@ class VideoPlayer(QWidget):
         if value >= 100:
             QMessageBox.information(None, "Complete", "Processing complete!")
             #self.progressBar.hide()
-            self.propagateButton.setEnabled(True)
+            self.flipButtons(True)
 
     def populateFrameList(self):
         self.frameList.clear()
@@ -346,6 +362,15 @@ class VideoPlayer(QWidget):
         for button in self.findChildren(QPushButton):
             button.setEnabled(enabled)
         self.slider.setEnabled(enabled)
+        self.menu_button.setEnabled(enabled)
+
+    def createComboBox(self):
+        comboBox = QComboBox()
+        comboBox.addItem("Delete Propagated Frames")
+        comboBox.addItem("Delete Video Frames ")
+        comboBox.addItem("Change Drawn Frame Folder")
+        comboBox.currentIndexChanged.connect(self.comboBoxChanged)
+        return comboBox
 
 def main():
     app = QApplication(sys.argv)
