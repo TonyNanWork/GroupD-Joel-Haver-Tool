@@ -21,13 +21,13 @@ def getEyeSize(landmarks):
     rightEyeHeight  = landmarks[39][1] - landmarks[42][1]
     return leftEyeWidth * leftEyeHeight + rightEyeWidth * rightEyeHeight
 
-def getBestFrame(folder_path,frame_list, threshold = 25):
+def getBestFrame(folder_path, frame_list, threshold = 25, top_n=10, frame_diff_threshold=50):
     returnlist = []
+    scene_frames = []
+    largest_features_list = []
+    used_frames = set()
+    last_selected_frame = None
 
-    largest_features = 0
-    best_image = None
-    
-    count = 0
     # Process each image in the folder
     previous_frame = None
     for filename in frame_list:
@@ -47,18 +47,18 @@ def getBestFrame(folder_path,frame_list, threshold = 25):
                 landmarks = [(p.x, p.y) for p in landmarks.parts()]
                 
                 mouth_size = getMouthSize(landmarks) 
-                eye_size = getMouthSize(landmarks) 
+                eye_size = getEyeSize(landmarks) 
                 eye_mouth = mouth_size + eye_size
-                if mouth_size > largest_features:
-                    largest_features = eye_mouth
-                    best_image = filename
+                
+                largest_features_list.append((eye_mouth, filename))
+                scene_frames.append(filename)
 
 
             gray = cv2.GaussianBlur(gray, (21, 21), 0)
             gray = cv2.resize(gray,(0, 0),fx=0.5, fy=0.5)
 
-            if count > 0:
-                print(filename)
+            if previous_frame is not None:
+                #print(filename)
                 frame_delta = cv2.absdiff(previous_frame, gray)
                 thresh = cv2.threshold(frame_delta, threshold, 255, cv2.THRESH_BINARY)[1]
             
@@ -68,13 +68,28 @@ def getBestFrame(folder_path,frame_list, threshold = 25):
                 if change_percent > threshold:
                     print("change found")
                     #print(f"Scene change detected at image: {frame_file}")
-                    returnlist.append(best_image)
-                    largest_features = 0
-                    best_image = filename
-    
+                    largest_features_list.sort(reverse=True)
+                    for i in range(top_n):
+                        if largest_features_list[i][1] not in used_frames:
+                            if last_selected_frame is None or abs(frame_list.index(largest_features_list[i][1]) - frame_list.index(last_selected_frame)) >= frame_diff_threshold:
+                                returnlist.append(largest_features_list[i][1])
+                                used_frames.add(largest_features_list[i][1])
+                                last_selected_frame = largest_features_list[i][1]
+                                break
+                    largest_features_list = []
+                    scene_frames = []
+                    
 
             previous_frame = gray.copy()
-            count = count + 1
-    returnlist.append(best_image)
-    return returnlist
+    
+    largest_features_list.sort(reverse=True)
+    for i in range(top_n):
+        if largest_features_list[i][1] not in used_frames:
+            if last_selected_frame is None or abs(frame_list.index(largest_features_list[i][1]) - frame_list.index(last_selected_frame)) >= frame_diff_threshold:
+                returnlist.append(largest_features_list[i][1])
+                used_frames.add(largest_features_list[i][1])
 
+    
+    print(returnlist)
+    
+    return returnlist
