@@ -19,7 +19,7 @@ def computeOpticalFlow(im1, im2):
     im2_blur = cv2.GaussianBlur(im2_g, (5, 5), 0)
 
     # Compute dense optical flow
-    flow = cv2.calcOpticalFlowFarneback(im1_blur, im2_blur, None, 0.7, 3, 15, 3, 5, 1.2, 0)
+    flow = cv2.calcOpticalFlowFarneback(im1_blur, im2_blur, None, 0.3, 5, 12, 5, 5, 2.0, 0)
     # flow = cv2.calcOpticalFlowPyrLK(im1_blur, im2_blur)
     
     #flow = cv2.calcOpticalFlowFarneback(im1, im2, None, 0.5, 5, 15, 5, 7, 1.5, 0)
