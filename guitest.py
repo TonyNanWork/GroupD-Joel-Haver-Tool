@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLa
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, QSize, pyqtSignal, QThread
 from scenechange import detectSceneChanges
-from propagate import propagate, checkFolder
+from propagate import propagate, checkFolder,propagateScene
 from faceLandmarkDetector import getBestFrame
 
 from vid2img import vid2img
@@ -273,7 +273,7 @@ class VideoPlayer(QWidget):
         checkFolder("output")
         output = "output"
         
-        self.propagationWorker = Worker(propagate, video, drawn, output)
+        self.propagationWorker = Worker(propagateScene, video, drawn, output,scene_files = self.scene_files[self.current_scene])
         
         self.propagationWorker.progress_callback.connect(self.updateProgress)
         self.propagationWorker.start()

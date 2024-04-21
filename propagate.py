@@ -139,7 +139,6 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
     video_frames = getVideoFrames(video_frame_folder)
     #print(video_frames)
     drawn_frames = getDrawnFrames(drawn_frame_folder)
-    
     total_frames = int(len(video_frames)) - 1
     processed_frames = 0
     
@@ -168,6 +167,39 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
             processed_frames += 1
             progress = int(processed_frames * 100 / total_frames)
             progress_callback(progress)
+    
+def propagateScene(video_frame_folder, drawn_frame_folder, output_frame_folder,scene_files ,progress_callback = None):
+
+    #print(video_frames)
+    drawn_frames = getDrawnFrames(drawn_frame_folder)
+    total_frames = int(len(scene_files)) - 1
+    processed_frames = 0
+    
+    # Iterate over each video frame and propagate the drawn style
+    for i in range(total_frames):
+        video_frame = cv2.imread(os.path.join(video_frame_folder, scene_files[i]))
+        next_video_frame = cv2.imread(os.path.join(video_frame_folder, scene_files[i+1]))
+        # Find the closest drawn frame's index 
+        closest_drawn = min(drawn_frames.keys(), key=lambda x: abs(x - i))
+
+        # Compute optical flow between consecutive video frames
+        flow = computeOpticalFlow(video_frame, drawn_frames[closest_drawn])
+        #flow = computeOpticalFlowManual(video_frame, drawn_frames[closest_drawn])
+        
+        #flow_visualization = visualizeOpticalFlow(flow)
+        #flow_output_path = os.path.join("flow", f"flow_{os.path.splitext(video_frames[i])[0]}.png")
+        #cv2.imwrite(flow_output_path, flow_visualization)
+        
+        # Warp the frame
+        warped = warpFrame(flow, drawn_frames[closest_drawn])
+        # Save the frame
+        output_frame = os.path.join(output_frame_folder, f'{os.path.splitext(scene_files[i])[0]}.png')
+        cv2.imwrite(output_frame, warped)
+        
+        if progress_callback:
+            processed_frames += 1
+            progress = int(processed_frames * 100 / total_frames)
+            progress_callback(progress)
         
         
 # video_folder = 'video_data'
@@ -175,9 +207,9 @@ def propagate(video_frame_folder, drawn_frame_folder, output_frame_folder, progr
 # output_folder = 'output'
 # flow_folder = 'flow'
 
-# # checkFolder(video_folder)
-# # checkFolder(drawn_folder)
-# # checkFolder(output_folder)
-# # checkFolder(flow_folder)
+# checkFolder(video_folder)
+# checkFolder(drawn_folder)
+# checkFolder(output_folder)
+# checkFolder(flow_folder)
 
 # propagate(video_folder, drawn_folder, output_folder)
