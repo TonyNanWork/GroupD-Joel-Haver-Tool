@@ -116,6 +116,7 @@ class VideoPlayer(QWidget):
         
         #  keyframe finder button
         self.keyframesButton = QPushButton("Find Keyframes")
+        self.keyframesButton.clicked.connect(self.delete_keyframes)
         self.keyframesButton.clicked.connect(self.getKeyframes)
         self.keyframesButton.setEnabled(False)
         self.controlsLayout.addWidget(self.keyframesButton)
@@ -141,31 +142,48 @@ class VideoPlayer(QWidget):
         self.mainLayout.addLayout(self.controlsLayout)
         self.setLayout(self.mainLayout)
         
-        self.menu_button = QToolButton()
-        self.menu_button.setText("Extra Utilities")
-        self.menu_button.setPopupMode(QToolButton.InstantPopup)
+        # self.frames_menu_button = QToolButton()
+        # self.frames_menu_button.setText("Change Frame View")
+        # self.frames_menu_button.setPopupMode(QToolButton.InstantPopup)
+        # self.frames_menu = QMenu()
         
-        self.menu = QMenu()
+        # self.view_keyframes_button = QAction("Delete Keyframes", self)
+        # self.view_keyframes_button.triggered.connect(self.delete_keyframes)
+        # self.frames_menu.addAction(self.view_keyframes_button)
+        
+        # self.frames_menu_button.setMenu(self.frames_menu)
+        # self.mainLayout.addWidget(self.frames_menu_button)
+        
+        self.option_menu_button = QToolButton()
+        self.option_menu_button.setText("Extra Utilities")
+        self.option_menu_button.setPopupMode(QToolButton.InstantPopup)
+        self.option_menu = QMenu()
                 
         self.select_drawn_folder = QAction("Select Drawn Frames Folder", self)
         self.select_drawn_folder.triggered.connect(self.selectDrawnFrame)
-        self.menu.addAction(self.select_drawn_folder)
+        self.option_menu.addAction(self.select_drawn_folder)
         
-        self.delete_propagated = QAction("Delete Propagated Output Files", self)
-        self.delete_propagated.triggered.connect(self.delete_output)
-        self.menu.addAction(self.delete_propagated)
+        self.delete_propagated_button = QAction("Delete Propagated Output Files", self)
+        self.delete_propagated_button.triggered.connect(self.delete_output)
+        self.option_menu.addAction(self.delete_propagated_button)
         
-        self.delete_data = QAction("Delete Video Frame Files", self)
-        self.delete_data.triggered.connect(self.delete_video)
-        self.menu.addAction(self.delete_data)
+        self.delete_data_button = QAction("Delete Video Frame Files", self)
+        self.delete_data_button.triggered.connect(self.delete_video)
+        self.option_menu.addAction(self.delete_data_button)
         
-        self.menu_button.setMenu(self.menu)
-        self.mainLayout.addWidget(self.menu_button)
+        self.delete_keyframes_button = QAction("Delete Keyframes", self)
+        self.delete_keyframes_button.triggered.connect(self.delete_keyframes)
+        self.option_menu.addAction(self.delete_keyframes_button)
+        
+        self.option_menu_button.setMenu(self.option_menu)
+        self.mainLayout.addWidget(self.option_menu_button)
 
     def delete_output(self):
         shutil.rmtree("output")
     def delete_video(self):
         shutil.rmtree("video_data")
+    def delete_keyframes(self):
+        shutil.rmtree("keyframes")
 
     def selectDrawnFrame(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder With Frames")
@@ -362,7 +380,7 @@ class VideoPlayer(QWidget):
         for button in self.findChildren(QPushButton):
             button.setEnabled(enabled)
         self.slider.setEnabled(enabled)
-        self.menu_button.setEnabled(enabled)
+        self.option_menu_button.setEnabled(enabled)
 
     def createComboBox(self):
         comboBox = QComboBox()
