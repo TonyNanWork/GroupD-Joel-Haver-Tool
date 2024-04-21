@@ -45,6 +45,11 @@ class VideoPlayer(QWidget):
         self.scene_files = [[]]
         self.scene_keyFrames = [[]]
 
+        checkFolder("video_data")
+        checkFolder("drawn")
+        checkFolder("keyframes")
+        checkFolder("output")
+
         self.frame_files = []
         self.current_scene = 0
         self.current_frame = 0
