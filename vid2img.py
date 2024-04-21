@@ -1,28 +1,38 @@
-import cv2, os, natsort
+import cv2, os, shutil
 # vidcap = cv2.VideoCapture('video_src/8a.mp4')
 
 # success, image = vidcap.read()
 
-def img2vid(image_folder, video_name, fps=30, codec='XVID', progress_callback=None):
-    images = natsort.natsorted(
-        [f for f in os.listdir(image_folder) if f.endswith('.png') or f.endswith('.jpg')]
-    )
+def vid2img(vid_src, progress_callback = None):
+    vidcap = cv2.VideoCapture(vid_src)
+    success, image = vidcap.read()
+    
+    total_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    processed_frames = 0
+    
+    if(not os.path.isdir('video_data')):
+        os.mkdir("video_data")
+    
+    # simple file to images
+    for vid_src in os.listdir("video_data"):
+        file_path = os.path.join("video_data", vid_src)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-    if not images:
-        print("No images found in the folder:", image_folder)
-        return
-
-    frame = cv2.imread(os.path.join(image_folder, images[0]))
-    height, width, layers = frame.shape
-
-    fourcc = cv2.VideoWriter_fourcc(*codec)
-    video = cv2.VideoWriter(video_name, fourcc, fps, (width, height))
-
-    for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
-
+    frame = 1
+    while success:
+        frame_num = '%d' % frame
+        #Output to test with ebsynth
+        #frame_num = frame_num.zfill(4) 
+        cv2.imwrite('video_data/'+ frame_num +'.png' , image)    
+        success, image = vidcap.read()
+        frame += 1
+        
         if progress_callback:
-            progress_callback(int((images.index(image) + 1) * 100 / len(images)))
-
-    cv2.destroyAllWindows()
-    video.release()
+            processed_frames += 1
+            progress_callback(int(processed_frames * 100 / total_frames))
