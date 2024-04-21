@@ -289,7 +289,7 @@ class VideoPlayer(QWidget):
         self.progressBar.show()
         self.flipButtons(False)
         
-        self.outputWorker = Worker(img2vid, "output", "output.avi")
+        self.outputWorker = Worker(img2vid, "output", "output.mp4")
         self.outputWorker.progress_callback.connect(self.updateProgress)
         self.outputWorker.start()
     
