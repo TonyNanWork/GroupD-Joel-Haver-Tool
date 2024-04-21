@@ -198,7 +198,7 @@ class VideoPlayer(QWidget):
         self.playButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         if not self.isPlaying:
-            self.timer.start(25)  # Adjust the frame rate as needed
+            self.timer.start(30)  # Adjust the frame rate as needed
             self.isPlaying = True
 
     def stopVideo(self):
