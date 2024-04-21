@@ -3,7 +3,7 @@ import cv2, os, natsort
 
 # success, image = vidcap.read()
 
-def img2vid(image_folder, video_name, fps=30, codec='H264', progress_callback=None):
+def img2vid(image_folder, video_name, fps=30, codec='XVID', progress_callback=None):
     images = natsort.natsorted(
         [f for f in os.listdir(image_folder) if f.endswith('.png') or f.endswith('.jpg')]
     )
