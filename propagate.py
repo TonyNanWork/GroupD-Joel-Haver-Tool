@@ -7,12 +7,12 @@ def computeOpticalFlow(im1, im2):
     im1_g = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
     im2_g = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
 
-    max_dim = 480
+    #max_dim = 480
     
-    if im1.shape[0] > max_dim or im1.shape[1] > max_dim:
-        scale_factor = max_dim / max(im1.shape[0], im1.shape[1])
-        im1 = cv2.resize(im1, (int(im1.shape[1]*scale_factor), int(im1.shape[0]*scale_factor)))
-        im2 = cv2.resize(im2, (int(im2.shape[1]*scale_factor), int(im2.shape[0]*scale_factor)))
+    #if im1.shape[0] > max_dim or im1.shape[1] > max_dim:
+       # scale_factor = max_dim / max(im1.shape[0], im1.shape[1])
+        #im1 = cv2.resize(im1, (int(im1.shape[1]*scale_factor), int(im1.shape[0]*scale_factor)))
+        #im2 = cv2.resize(im2, (int(im2.shape[1]*scale_factor), int(im2.shape[0]*scale_factor)))
 
 
     im1_blur = cv2.GaussianBlur(im1_g, (5, 5), 0)

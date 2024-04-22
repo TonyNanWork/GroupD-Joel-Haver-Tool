@@ -207,8 +207,8 @@ class VideoPlayer(QWidget):
             self.isPlaying = True
 
     def stopVideo(self):
-        self.playButton.setEnabled(False)
-        self.stopButton.setEnabled(True)
+        self.stopButton.setEnabled(False)
+        self.playButton.setEnabled(True)
         self.timer.stop()
         self.isPlaying = False
 
