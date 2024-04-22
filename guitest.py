@@ -45,6 +45,11 @@ class VideoPlayer(QWidget):
         self.scene_files = [[]]
         self.scene_keyFrames = [[]]
 
+        checkFolder("video_data")
+        checkFolder("drawn")
+        checkFolder("keyframes")
+        checkFolder("output")
+
         self.frame_files = []
         self.current_scene = 0
         self.current_frame = 0
@@ -198,7 +203,7 @@ class VideoPlayer(QWidget):
         self.playButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         if not self.isPlaying:
-            self.timer.start(25)  # Adjust the frame rate as needed
+            self.timer.start(30)  # Adjust the frame rate as needed
             self.isPlaying = True
 
     def stopVideo(self):
@@ -284,7 +289,7 @@ class VideoPlayer(QWidget):
         self.progressBar.show()
         self.flipButtons(False)
         
-        self.outputWorker = Worker(img2vid, "output", "output.avi")
+        self.outputWorker = Worker(img2vid, "output", "output.mp4")
         self.outputWorker.progress_callback.connect(self.updateProgress)
         self.outputWorker.start()
     
