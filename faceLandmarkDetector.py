@@ -68,9 +68,17 @@ def getBestFrame(folder_path, frame_list, threshold = 25, top_n=10, frame_diff_t
                 if change_percent > threshold:
                     print("change found")
                     #print(f"Scene change detected at image: {frame_file}")
-                    returnlist.append(best_image)
-                    largest_features = 0
-                    best_image = filename    
+                    largest_features_list.sort(reverse=True)
+                    for i in range(top_n):
+                        if largest_features_list[i][1] not in used_frames:
+                            if last_selected_frame is None or abs(frame_list.index(largest_features_list[i][1]) - frame_list.index(last_selected_frame)) >= frame_diff_threshold:
+                                returnlist.append(largest_features_list[i][1])
+                                used_frames.add(largest_features_list[i][1])
+                                last_selected_frame = largest_features_list[i][1]
+                                break
+                    largest_features_list = []
+                    scene_frames = []
+                    
 
             previous_frame = gray.copy()
     
