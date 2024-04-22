@@ -11,7 +11,7 @@ The left side is a list of keyframes.
 
 
 
-### propogate a video
+### Propogate a Video
 First choose a video using the file selector button.
 The application will lag while processing the video.
 Click on find keyframes buttons which will lag will finding the best frame.
