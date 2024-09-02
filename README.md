@@ -8,6 +8,7 @@ The main application is run using Application.py
 
 The right side of the application is a list of scenes.
 The left side is a list of keyframes.
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/ztz9RNFMBD4/0.jpg)](https://www.youtube.com/watch?v=ztz9RNFMBD4)
 
 
 
